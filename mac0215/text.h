@@ -26,6 +26,7 @@ class text: public QOpenGLWidget, protected QOpenGLFunctions {
 public:
     text(QString font, QWidget *parent = 0);
 
+    void LoadCube();
     void define_font_type (QString font);
     void define_text (QString t);
     void bake_atlas ();
@@ -69,6 +70,10 @@ private:
     QVector3D vLightPosition;
     QVector3D* sg_vertexes_, *sg_normals_;
     int vertexCount_, normalCount_;
+    int indiceSize_, normalIndiceSize_;
+    GLuint* indices_, *normalIndices_;
+    QVector3D *vertices, *normals, *flatNormals, *meanNormals;
+    GLuint *indices, *normalIndices;
 
     QMetaObject::Connection m_connection;
 };

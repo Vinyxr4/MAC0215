@@ -4,6 +4,25 @@
 
 #include "input.h"
 
+QVector3D cubeVertices[] = {
+QVector3D( 0.5f,  0.5f,  0.5f),
+QVector3D(-0.5f,  0.5f,  0.5f),
+QVector3D(-0.5f, -0.5f,  0.5f),
+QVector3D( 0.5f, -0.5f,  0.5f),
+QVector3D( 0.5f,  0.5f, -0.5f),
+QVector3D(-0.5f,  0.5f, -0.5f),
+QVector3D(-0.5f, -0.5f, -0.5f),
+QVector3D( 0.5f, -0.5f, -0.5f)};
+
+static GLuint cubeIndices[] = {
+0,1,2, 2,3,0,
+7,5,4, 5,7,6,
+0,4,5, 5,1,0,
+3,2,6, 6,7,3,
+2,1,5, 2,5,6,
+0,3,7, 7,4,0
+};
+
 text::text (QString font, QWidget *parent) : QOpenGLWidget(parent), m_program(0) {
     define_font_type (QString (font));
 
@@ -15,6 +34,61 @@ text::text (QString font, QWidget *parent) : QOpenGLWidget(parent), m_program(0)
     //FT_Set_Pixel_Sizes(face, 0, 48);
     //FT_Load_Char(face, 'x', FT_LOAD_RENDER);
     //qDebug () << face->glyph->bitmap.width;
+
+    LoadCube ();
+}
+
+void text::LoadCube () {
+    vertices = (QVector3D*) malloc (36 * sizeof (QVector3D));
+    normals = (QVector3D*) malloc (36 * sizeof (QVector3D));
+    flatNormals = (QVector3D*) malloc (36 * sizeof (QVector3D));
+    meanNormals = (QVector3D*) malloc (36 * sizeof (QVector3D));
+
+    std::vector<QVector3D> faceNorms;
+    for (int i = 0; i < (int) 36; i += 3) {
+        QVector3D u(cubeVertices[cubeIndices[i]] - cubeVertices[cubeIndices[i+2]]);
+        QVector3D v(cubeVertices[cubeIndices[i+1]] - cubeVertices[cubeIndices[i]]);
+        QVector3D prod = u.crossProduct(u,v);
+        faceNorms.push_back(prod);
+    }
+
+    for (int i = 0; i < 36;++i) {
+        flatNormals[i] = faceNorms[i/3];
+        flatNormals[i].normalize();
+    }
+
+    QVector3D *mean = (QVector3D*) malloc (8 * sizeof (QVector3D));
+    for (int i = 0; i < 8;++i) {
+        mean[i] = QVector3D(0.0f, 0.0f, 0.0f);
+        for (int j = 0; j < (int) 36; ++j)
+                mean[cubeIndices[j]] += faceNorms[j/3];
+    }
+    for (int i = 0; i < 8; ++i)
+        mean[i].normalize();
+
+    for (int i = 0; i < 36; ++i) {
+        vertices[i] = cubeVertices[cubeIndices[i]];
+        normals[i] = cubeVertices[cubeIndices[i]];
+        normals[i].normalize();
+        meanNormals[i] = mean[cubeIndices[i]];
+    }
+    free(mean);
+
+    indices = (GLuint*) malloc (36 * sizeof (GLuint));
+    normalIndices = (GLuint*) malloc (36 * sizeof (GLuint));
+
+    for (int i = 0; i < 36; ++i)
+        indices[i] = cubeIndices[i];
+
+    indiceSize_ = 36;
+    vertexCount_ = 36;
+    indices_ = indices;
+    sg_vertexes_ = vertices;
+
+    normalIndiceSize_ = 36;
+    normalCount_ = 36;
+    normalIndices_ = normalIndices;
+    sg_normals_ = normals;
 }
 
 void text::define_text (QString t) {
