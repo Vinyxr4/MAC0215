@@ -1,6 +1,8 @@
 #include "text.h"
 #include <QOpenGLShaderProgram>
 #include <QCoreApplication>
+#include <cmath>
+#include <QImage>
 
 #include "input.h"
 
@@ -26,16 +28,60 @@ static GLuint cubeIndices[] = {
 text::text (QString font, QWidget *parent) : QOpenGLWidget(parent), m_program(0) {
     define_font_type (QString (font));
 
-    if (FT_Init_FreeType (&ft))
-        qDebug() << "ruim init";
-    if(FT_New_Face(ft, font_path.toStdString().c_str(), 0, &face))
-      qDebug() << "ruim new face";
-
     //FT_Set_Pixel_Sizes(face, 0, 48);
     //FT_Load_Char(face, 'x', FT_LOAD_RENDER);
     //qDebug () << face->glyph->bitmap.width;
 
+    bake_atlas();
+
     LoadCube ();
+}
+
+void text::bake_atlas() {
+    if (FT_Init_FreeType (&ft))
+        qDebug() << "ruim init";
+    if(FT_New_Face(ft, font_path.toStdString().c_str(), 0, &face))
+        qDebug() << "ruim new face";
+
+    int GLYPH_HEIGHT = 1000;
+    int DPI = 250;
+
+    FT_Set_Char_Size(face, 0, GLYPH_HEIGHT, DPI, DPI);
+
+    int num_glyphs = face->num_glyphs;
+
+    uint texture_height = (face->size->metrics.height >> 6) * (sqrt(num_glyphs));
+    uint texture_width = texture_height;
+
+    QImage texture(texture_width, texture_height, QImage::Format_RGB32);
+    QRgb color;
+    int x = 0;
+    int y = 0;
+
+    for (int i = 0; i < num_glyphs; ++i) {
+        FT_Load_Char (face, i, FT_LOAD_RENDER| FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT);
+        FT_Bitmap *bmp = &face->glyph->bitmap;
+
+
+        if (x + bmp->width >= texture_width)
+            x = 0, y += (1 + (face->size->metrics.height >> 6));
+
+        for (int row = 0; row < bmp->rows; ++row) {
+            for (int col = 0; col < bmp->width; ++col) {
+                int color_cmp = bmp->buffer[row * bmp->pitch + col] * (int) (255.0/80.0);
+                color = qRgb (color_cmp,color_cmp,color_cmp);
+
+                texture.setPixel(col + x, row + y, color);
+            }
+        }
+
+        x += bmp->width;
+    }
+
+    texture.save("atlas.png", Q_NULLPTR, 50);
+
+
+    FT_Done_FreeType(ft);
 }
 
 void text::LoadCube () {

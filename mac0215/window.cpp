@@ -14,7 +14,7 @@
 
 Window::Window(MainWindow *mw, int step, int shininess)
     : mainWindow(mw), step_(step), shininess_(shininess) {
-  textWidget = new text (QString ("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf"));
+  textWidget = new text (QString ("/usr/share/fonts/truetype/ubuntu-font-family/UbuntuMono-R.ttf"));
 
   QVBoxLayout *mainLayout = new QVBoxLayout;
   QGridLayout *container = new QGridLayout;
