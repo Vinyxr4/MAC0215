@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>shaders/BP_noInterp.vert</file>
+        <file>shaders/BP_noInterp.frag</file>
+        <file>shaders/BP_interp.frag</file>
+        <file>shaders/BP_interp.vert</file>
+        <file>shaders/ON_interp.frag</file>
+        <file>shaders/ON_interp.vert</file>
+        <file>shaders/ON_noInterp.frag</file>
+        <file>shaders/ON_noInterp.vert</file>
+    </qresource>
+</RCC>
