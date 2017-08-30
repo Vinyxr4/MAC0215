@@ -11,6 +11,7 @@
 #include <QOpenGLShader>
 #include <QOpenGLFunctions>
 #include <QOpenGLVertexArrayObject>
+#include <QOpenGLTexture>
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
@@ -36,6 +37,8 @@ public:
     void connectUpdate();
     void disconnectUpdate();
     void reload_shader ();
+    void LoadText ();
+    void reload ();
 
     QVector3D difusiveColor;
     QVector3D ambientColor;
@@ -70,6 +73,7 @@ private:
 
     QOpenGLBuffer m_vertex;
     QOpenGLBuffer m_normal;
+    QOpenGLBuffer m_tex;
 
     QOpenGLVertexArrayObject m_object;
 
@@ -97,12 +101,14 @@ private:
     int indiceSize_, normalIndiceSize_;
     int vertexCount_, normalCount_;
     int m_normalAttr;
+    int m_texAttr;
     int u_shininess;
     GLuint* indices_, *normalIndices_;
     QVector3D color_;
     QVector3D* sg_vertexes_, *sg_normals_;
     QVector3D *vertices;
     QVector3D *normals, *flatNormals, *meanNormals;
+    QVector2D *Texture, *sg_texture_;
     GLuint *indices, *normalIndices;
 
     QMetaObject::Connection m_connection;

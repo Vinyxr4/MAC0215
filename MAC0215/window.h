@@ -65,10 +65,10 @@ private:
 
     float albedo_factor = 10.0;
 
+    MainWindow *mainWindow;
     int step_;
     int shininess_;
     GLWidget *glWidget;
-    MainWindow *mainWindow;
     QRadioButton *blinn, *nayar;
     QRadioButton *flat, *gouraud, *phong;
 

@@ -8,5 +8,7 @@
         <file>shaders/ON_interp.vert</file>
         <file>shaders/ON_noInterp.frag</file>
         <file>shaders/ON_noInterp.vert</file>
+        <file>shaders/texture.frag</file>
+        <file>shaders/texture.vert</file>
     </qresource>
 </RCC>

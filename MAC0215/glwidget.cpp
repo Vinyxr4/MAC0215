@@ -11,6 +11,8 @@
 #include "input.h"
 #include "text.h"
 
+QOpenGLTexture *texture;
+
 // Create a colored cube
 
 QVector3D cubeVertices[] = {
@@ -34,12 +36,15 @@ static GLuint cubeIndices[] = {
 };
 
 
+text *Text;
+
 GLWidget::GLWidget(int step, QWidget *parent)
     : QOpenGLWidget(parent),
       m_program(0) {
   step_ = step;
 
-  text *Text = new text (QString ("/usr/share/fonts/truetype/ubuntu-font-family/UbuntuMono-R.ttf"));
+  Text = new text (QString ("/usr/share/fonts/truetype/ubuntu-font-family/UbuntuMono-R.ttf"));
+  Text->gen_test();
 
   LoadCube();
 }
@@ -95,6 +100,54 @@ void GLWidget::LoadCube() {
   normalCount_ = 36;
   normalIndices_ = normalIndices;
   sg_normals_ = normals;
+}
+
+void GLWidget::LoadText () {
+    QVector3D *font_vertex = (QVector3D*) malloc (Text->font_vertices.size () * sizeof (QVector3D));
+    QVector2D *font_tex = (QVector2D*) malloc (Text->font_texture.size () * sizeof (QVector2D));
+
+    for (uint i = 0; i < Text->font_vertices.size (); ++i) {
+        font_vertex[i] = Text->font_vertices[i];
+        font_tex[i] = Text->font_texture[i];
+    }
+
+    delete texture;
+    texture = new QOpenGLTexture (QImage ("atlas.png").mirrored());
+
+    texture->setMinificationFilter(QOpenGLTexture::Nearest);
+    texture->setMagnificationFilter(QOpenGLTexture::Linear);
+    texture->setWrapMode(QOpenGLTexture::MirroredRepeat);
+
+    m_object.bind();
+    m_vertex.bind();
+
+    sg_vertexes_ = font_vertex;
+    vertexCount_ = Text->font_vertices.size ();
+    m_vertex.allocate(sg_vertexes_, vertexCount_ * sizeof (QVector3D));
+
+    m_object.release();
+    m_vertex.release();
+
+    m_object.bind();
+    m_tex.bind();
+
+    sg_texture_ = font_tex;
+    m_tex.allocate(sg_texture_, vertexCount_ * sizeof (QVector2D));
+
+    m_object.release();
+    m_tex.release();
+}
+
+void GLWidget::reload () {
+    m_object.bind();
+    m_vertex.bind();
+
+    sg_vertexes_ = vertices;
+    vertexCount_ =36;
+    m_vertex.allocate(sg_vertexes_, vertexCount_ * sizeof (QVector3D));
+
+    m_object.release();
+    m_vertex.release();
 }
 
 void GLWidget::changeToFlat() {
@@ -255,10 +308,10 @@ void GLWidget::disconnectUpdate() {
 }
 
 void GLWidget::initializeGL() {
-  vLightPosition = QVector3D (0.0f, 4.0f, 5.0f);
+  //vLightPosition = QVector3D (0.0f, 4.0f, 5.0f);
 
 
-  m_camera.translate(QVector3D(0.0f, 0.0f, 2.0f));
+  m_camera.translate(QVector3D(0.0f, 0.0f, 10.0f));
   // Put the object a little to the front of the camera (the camera is looking
   // at (0.0, 0.0, -1.0))
   actual = factor = -5;
@@ -268,17 +321,19 @@ void GLWidget::initializeGL() {
   connectUpdate();
   printContextInformation();
   // Set global information
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_DEPTH_TEST);
   glDepthRange(0,1);
-  glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+  glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 
   // Application-specific initialization
   {
     // Create Shader (Do not release until VAO is created)
     m_program = new QOpenGLShaderProgram();
-    m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/BP_interp.vert");
+    m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/texture.vert");
     shader = new QOpenGLShader(QOpenGLShader::Fragment);
-    shader->compileSourceFile(":/shaders/BP_interp.frag");
+    shader->compileSourceFile(":/shaders/texture.frag");
     m_program->addShader(shader);
     m_program->link();
     m_program->bind();
@@ -287,14 +342,15 @@ void GLWidget::initializeGL() {
     u_modelToWorld = m_program->uniformLocation("modelToWorld");
     u_worldToCamera = m_program->uniformLocation("worldToCamera");
     u_cameraToView = m_program->uniformLocation("cameraToView");
-    u_lightPosition = m_program->uniformLocation("lightPosition");
-    u_difuseColor= m_program->uniformLocation("diffuseProduct");
-    u_ambientColor= m_program->uniformLocation("ambientProduct");
-    u_specularColor= m_program->uniformLocation("specularProduct");
-    u_shininess= m_program->uniformLocation("shininess");
-    u_albedo= m_program->uniformLocation("albedo");
-    u_roughness= m_program->uniformLocation("roughness");
-    m_normalAttr = m_program->attributeLocation("vNormal");
+    //u_lightPosition = m_program->uniformLocation("lightPosition");
+    //u_difuseColor= m_program->uniformLocation("diffuseProduct");
+    //u_ambientColor= m_program->uniformLocation("ambientProduct");
+    //u_specularColor= m_program->uniformLocation("specularProduct");
+    //u_shininess= m_program->uniformLocation("shininess");
+    //u_albedo= m_program->uniformLocation("albedo");
+    //u_roughness= m_program->uniformLocation("roughness");
+    //m_normalAttr = m_program->attributeLocation("vNormal");
+    m_texAttr = m_program->attributeLocation("texCoord");
 
     // Create Buffer (Do not release until VAO is created)
     m_vertex.create();
@@ -309,10 +365,20 @@ void GLWidget::initializeGL() {
     m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3,0);
     m_program->enableAttributeArray(0);
 
-    // Release (unbind) all
     m_object.release();
 
-    // Mexi mas não sei se tá certo
+    m_object.bind();
+    m_tex.create();
+    m_tex.bind();
+    m_tex.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    m_tex.allocate(sg_texture_, vertexCount_*sizeof(QVector2D));
+
+    m_program->setAttributeBuffer(1, GL_FLOAT, 0, 2,0);
+    m_program->enableAttributeArray(1);
+
+    m_object.release();
+
+    /*
     m_object.bind();
     m_normal.create();
     m_normal.bind();
@@ -326,6 +392,7 @@ void GLWidget::initializeGL() {
     m_vertex.release();
     m_normal.release();
     m_program->release();
+    */
   }
 }
 
@@ -402,28 +469,39 @@ void GLWidget::reload_shader () {
 void GLWidget::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  /*
   if (changed) {
     reload_shader();
     changed = false;
   }
-
+ */
   m_program->bind();
 
   m_program->setUniformValue(u_worldToCamera, m_camera.toMatrix());
 
-  m_program->setUniformValue(u_lightPosition, vLightPosition.toVector4D());
+  //m_program->setUniformValue(u_lightPosition, vLightPosition.toVector4D());
   m_program->setUniformValue(u_cameraToView, m_projection);
-  m_program->setUniformValue(u_difuseColor, difusiveColor);
-  m_program->setUniformValue(u_ambientColor, ambientColor);
-  m_program->setUniformValue(u_specularColor, specularColor);
-  m_program->setUniformValue(u_shininess, shininess);
-  m_program->setUniformValue(u_albedo, albedo);
-  m_program->setUniformValue(u_roughness, roughness);
-  {
+  //m_program->setUniformValue(u_difuseColor, difusiveColor);
+  //m_program->setUniformValue(u_ambientColor, ambientColor);
+  //m_program->setUniformValue(u_specularColor, specularColor);
+  //m_program->setUniformValue(u_shininess, shininess);
+  //m_program->setUniformValue(u_albedo, albedo);
+  //m_program->setUniformValue(u_roughness, roughness);
+  m_program->setUniformValue("texture", 0);
+  /*{
     m_object.bind();
     m_program->setUniformValue(u_modelToWorld, m_transform.toMatrix());
     glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
     m_object.release();
+  }*/
+  {
+    LoadText ();
+    m_object.bind();
+    m_program->setUniformValue(u_modelToWorld, m_transform.toMatrix());
+    texture->bind();
+    glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
+    m_object.release();
+    //reload ();
   }
   m_program->release();
 }

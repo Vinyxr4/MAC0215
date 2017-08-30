@@ -3,17 +3,9 @@
 text::text (QString font) {
     define_font_type (QString (font));
     bake_atlas ();
-
-    //std::vector<QVector3D> vec;
-    //vec.push_back(QVector3D (0,0,0));
-    //vec.push_back(QVector3D (0,0,0));
-    //vec.push_back(QVector3D (0,0,0));
-    //vec.push_back(QVector3D (0,0,0));
-
-    //define_text(QString ("p"),vec);
-    //qDebug () << font_texture;
 }
 
+uint size;
 
 void text::bake_atlas() {
     if (FT_Init_FreeType (&ft))
@@ -30,6 +22,7 @@ void text::bake_atlas() {
 
     uint texture_height = (face->size->metrics.height >> 6) * (sqrt(num_glyphs));
     uint texture_width = texture_height;
+    size = texture_height;
 
     QImage texture(texture_width, texture_height, QImage::Format_RGB32);
     QRgb color;
@@ -54,7 +47,7 @@ void text::bake_atlas() {
         glyph *g = new glyph (x, y, bmp->rows, bmp->width, i);
         glyph_set.push_back (*g);
 
-        x += bmp->width;
+        x +=  1 + bmp->width;
     }
 
     texture.save("atlas.png", Q_NULLPTR, 50);
@@ -66,7 +59,7 @@ void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
     text_to_render = QString (t);
 
     int i = 0;
-    for (QChar *c = text_to_render.begin(); c != text_to_render.end(); ++c, ++i) {
+    for (QChar *c = text_to_render.begin(); c != text_to_render.end(); ++c, i += 4) {
         font_vertices.push_back(quad_vertices[i]);
         font_vertices.push_back(quad_vertices[i + 1]);
         font_vertices.push_back(quad_vertices[i + 2]);
@@ -74,25 +67,51 @@ void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
         font_vertices.push_back(quad_vertices[i + 1]);
         font_vertices.push_back(quad_vertices[i + 3]);
 
-        int ch = c->unicode();
+        glyph g = glyph_set[c->unicode()];
 
-        glyph g = glyph_set[ch];
+        float x_offset = (1.0 * g.get_x_offset()) / size;
+        float y_offset = (1.0 * g.get_y_offset()) / size;
+        float height = (1.0 * g.get_height ()) / size;
+        float width = (1.0 * g.get_width ()) / size;
 
-
-        int x_offset = g.get_x_offset();
-        int y_offset = g.get_y_offset();
-        int height = g.get_height ();
-        int width = g.get_width ();
-
-        font_texture.push_back(QVector2D(x_offset, y_offset + height));
-        font_texture.push_back(QVector2D(x_offset + width, y_offset + height));
-        font_texture.push_back(QVector2D(x_offset, y_offset));
-        font_texture.push_back(QVector2D(x_offset, y_offset));
-        font_texture.push_back(QVector2D(x_offset + width, y_offset + height));
-        font_texture.push_back(QVector2D(x_offset + width, y_offset));
+        font_texture.push_back(QVector2D(x_offset, 1 - (y_offset + height)));
+        font_texture.push_back(QVector2D(x_offset + width, 1 - (y_offset + height)));
+        font_texture.push_back(QVector2D(x_offset, 1 - y_offset));
+        font_texture.push_back(QVector2D(x_offset, 1 - y_offset));
+        font_texture.push_back(QVector2D(x_offset + width, 1 - (y_offset + height)));
+        font_texture.push_back(QVector2D(x_offset + width, 1 - y_offset));
     }
 }
 
 void text::define_font_type (QString font) {
     font_path = font;
+}
+
+void text::gen_test () {
+    QString test_string ("Olá!");
+
+    std::vector<QVector3D> vec;
+    vec.push_back(QVector3D (-2.0, 0, 0));
+    vec.push_back(QVector3D (-1.5, 0, 0));
+    vec.push_back(QVector3D (-2.0, 0.5, 0));
+    vec.push_back(QVector3D (-1.5, 0.5, 0));
+
+    vec.push_back(QVector3D (-1.5, 0, 0));
+    vec.push_back(QVector3D (-1.0, 0, 0));
+    vec.push_back(QVector3D (-1.5, 0.5, 0));
+    vec.push_back(QVector3D (-1.0, 0.5, 0));
+
+    vec.push_back(QVector3D (-1.0, 0, 0));
+    vec.push_back(QVector3D (-0.5, 0, 0));
+    vec.push_back(QVector3D (-1.0, 0.5, 0));
+    vec.push_back(QVector3D (-0.5, 0.5, 0));
+
+    vec.push_back(QVector3D (-0.5, 0, 0));
+    vec.push_back(QVector3D (-0.3, 0, 0));
+    vec.push_back(QVector3D (-0.5, 0.5, 0));
+    vec.push_back(QVector3D (-0.3, 0.5, 0));
+
+    define_text(test_string, vec);
+
+    qDebug () << "Coordenadas:\n" << font_texture;
 }

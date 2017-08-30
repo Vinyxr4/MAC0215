@@ -22,6 +22,10 @@ public:
     void define_text (QString t, std::vector<QVector3D> quad_vertices);
     void bake_atlas ();
     void render_text ();
+    void gen_test ();
+
+    std::vector<QVector3D> font_vertices;
+    std::vector<QVector2D> font_texture;
 
 private:
     QString font_path;
@@ -30,8 +34,6 @@ private:
     FT_Face face;
 
     std::vector<glyph> glyph_set;
-    std::vector<QVector3D> font_vertices;
-    std::vector<QVector2D> font_texture;
 };
 
 #endif // TEXT_H

@@ -60,4 +60,5 @@ DISTFILES += \
     shaders/ON_interp.frag \
     shaders/ON_noInterp.vert \
     shaders/ON_noInterp.frag \
+    shaders/texture.vert
 
