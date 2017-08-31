@@ -321,8 +321,6 @@ void GLWidget::initializeGL() {
   connectUpdate();
   printContextInformation();
   // Set global information
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_DEPTH_TEST);
   glDepthRange(0,1);
   glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
@@ -495,6 +493,8 @@ void GLWidget::paintGL() {
     m_object.release();
   }*/
   {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     LoadText ();
     m_object.bind();
     m_program->setUniformValue(u_modelToWorld, m_transform.toMatrix());
