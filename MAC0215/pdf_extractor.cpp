@@ -1,14 +1,14 @@
 #include "pdf_extractor.h"
-#include <iostream>
 
+/*
 int main (int argc, char *argv[]) {
-	PyObject *pModule;
+    PyObject *pModule;
     int num_pages;
-	double *bbox;
+    double *bbox;
 
-	pModule = init_extraction ();
+    pModule = init_extraction ();
 
-	std::string path = "/home/viniciuspd/Desktop/lista_1.pdf";
+    std::string path = "/home/viniciuspd/Desktop/lista_1.pdf";
     num_pages = extract (pModule, path);
     std::string ans = extract_text (pModule, 0);
     bbox = extract_bbox (pModule, 0);
@@ -19,11 +19,16 @@ int main (int argc, char *argv[]) {
 
     free (bbox);
 
-	return 0;
+    return 0;
+}
+*/
+
+pdf_extractor::pdf_extractor (std::string path) {
+    pdf_path = path;
 }
 
-PyObject *init_extraction () {
-	PyObject *pName, *pModule;
+void pdf_extractor::init () {
+    PyObject *pName;
 
 	setenv("PYTHONPATH", ".", 1);
 
@@ -31,16 +36,14 @@ PyObject *init_extraction () {
     pName = PyString_FromString("pdf_extractor");
     pModule = PyImport_Import(pName);
     Py_DECREF(pName);
-
-    return pModule;
 }
 
-void end_extraction (PyObject *pModule) {
+void pdf_extractor::end () {
     Py_DECREF(pModule);
     Py_Finalize();
 }
 
-int extract (PyObject *pModule, std::string pdf_path) {
+int pdf_extractor::extract () {
     PyObject *pFunc, *pArgs, *pValue;
     int num_pages;
 
@@ -62,7 +65,7 @@ int extract (PyObject *pModule, std::string pdf_path) {
     return num_pages;
 }
 
-std::string extract_text (PyObject *pModule, int page) {
+std::string pdf_extractor::get_text (int page) {
     PyObject *pFunc, *pArgs, *pValue;
     std::string text;
 
@@ -84,7 +87,7 @@ std::string extract_text (PyObject *pModule, int page) {
     return text;
 }
 
-double *extract_bbox (PyObject *pModule, int page) {
+double *pdf_extractor::get_bbox (int page) {
     PyObject *pFunc, *pArgs, *pValue;
     PyObject *ptemp, *objectsRepresentation;
     double *bbox;
