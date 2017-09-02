@@ -1,28 +1,5 @@
 #include "pdf_extractor.h"
 
-/*
-int main (int argc, char *argv[]) {
-    PyObject *pModule;
-    int num_pages;
-    double *bbox;
-
-    pModule = init_extraction ();
-
-    std::string path = "/home/viniciuspd/Desktop/lista_1.pdf";
-    num_pages = extract (pModule, path);
-    std::string ans = extract_text (pModule, 0);
-    bbox = extract_bbox (pModule, 0);
-
-    end_extraction (pModule);
-
-    std::cout << ans << '\n';
-
-    free (bbox);
-
-    return 0;
-}
-*/
-
 pdf_extractor::pdf_extractor (std::string path) {
     pdf_path = path;
 }
