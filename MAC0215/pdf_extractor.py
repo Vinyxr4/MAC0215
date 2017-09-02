@@ -3,8 +3,6 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.pdfdevice import PDFDevice
 from pdfminer.pdfpage import PDFPage
-from unidecode import unidecode
-
 
 class pdf_page:
 	def __init__ (self, encoding='utf-8'):
@@ -35,9 +33,20 @@ class extractor:
 			if isinstance (element, LTChar):
 				encoding = self.pages[-1].encoding
 				self.pages[-1].text.append (element.get_text ().encode (encoding))
-				self.pages[-1].bbox.append (element.bbox)
+				for i in range (0, 4):
+					self.pages[-1].bbox.append (element.bbox[i])
 				
 			elif isinstance (element, LTTextBoxHorizontal) or isinstance (element, LTTextLine):
 				self.layout_search (element)
 
-#x = extractor ("/home/viniciuspd/Desktop/lista_1.pdf")
+
+def extract (pdf_path):
+	global x	
+	x = extractor (pdf_path)
+	return len (x.pages)
+
+def extract_text (page_number=0):
+	return ''.join(x.pages[page_number].text)
+
+def extract_positions (page_number=0):
+	return x.pages[page_number].bbox
