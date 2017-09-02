@@ -1,41 +1,46 @@
-//g++ -I/usr/include/python2.7 run_python.cpp -o run_python -lpython2.7
-
-#include <Python.h>
-#include <stdlib.h>
-#include <string>
-
-int extract (PyObject *pModule);
-std::string extract_text (PyObject *pModule, int page);
-double *extract_bbox (PyObject *pModule, int page);
+#include "pdf_extractor.h"
+#include <iostream>
 
 int main (int argc, char *argv[]) {
-	PyObject *pName, *pModule, *pDict, *pFunc;
-    PyObject *pArgs, *pValue;
+	PyObject *pModule;
     int num_pages;
 	double *bbox;
 
-    setenv("PYTHONPATH",".",1);
+	pModule = init_extraction ();
 
-    Py_Initialize();
-    pName = PyString_FromString("pdf_extractor");
-
-    pModule = PyImport_Import(pName);
-    Py_DECREF(pName);
-
-    num_pages = extract (pModule);
-
+	std::string path = "/home/viniciuspd/Desktop/lista_1.pdf";
+    num_pages = extract (pModule, path);
     std::string ans = extract_text (pModule, 0);
     bbox = extract_bbox (pModule, 0);
 
-    Py_DECREF(pModule);
-    Py_Finalize();
+    end_extraction (pModule);
+
+    std::cout << ans << '\n';
 
     free (bbox);
 
 	return 0;
 }
 
-int extract (PyObject *pModule) {
+PyObject *init_extraction () {
+	PyObject *pName, *pModule;
+
+	setenv("PYTHONPATH", ".", 1);
+
+    Py_Initialize();
+    pName = PyString_FromString("pdf_extractor");
+    pModule = PyImport_Import(pName);
+    Py_DECREF(pName);
+
+    return pModule;
+}
+
+void end_extraction (PyObject *pModule) {
+    Py_DECREF(pModule);
+    Py_Finalize();
+}
+
+int extract (PyObject *pModule, std::string pdf_path) {
     PyObject *pFunc, *pArgs, *pValue;
     int num_pages;
 
@@ -43,7 +48,7 @@ int extract (PyObject *pModule) {
 
     pArgs = PyTuple_New (1);
     
-    pValue = PyString_FromString ("/home/viniciuspd/Desktop/lista_1.pdf");
+    pValue = PyString_FromString (pdf_path.c_str ());
     PyTuple_SetItem(pArgs, 0, pValue);
 
     pValue = PyObject_CallObject(pFunc, pArgs);
