@@ -44,7 +44,7 @@ public:
     QVector3D ambientColor;
     QVector3D specularColor;
     float shininess;
-    float albedo;
+    float albedo, last_albedo;
     float roughness;
     int shading = 0;
     int reflectmodel = 0;

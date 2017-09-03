@@ -12,6 +12,7 @@
 #include FT_FREETYPE_H
 
 #include "glyph.h"
+#include "pdf_extractor.h"
 
 class text {
 public:
@@ -22,7 +23,9 @@ public:
     void define_text (QString t, std::vector<QVector3D> quad_vertices);
     void bake_atlas ();
     void render_text ();
+    void define_text_from_pdf (QString pdf_path);
     void gen_test ();
+    void gen_test_pdf ();
 
     std::vector<QVector3D> font_vertices;
     std::vector<QVector2D> font_texture;

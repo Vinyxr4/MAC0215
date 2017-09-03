@@ -44,9 +44,9 @@ GLWidget::GLWidget(int step, QWidget *parent)
   step_ = step;
 
   Text = new text (QString ("/usr/share/fonts/truetype/ubuntu-font-family/UbuntuMono-R.ttf"));
-  Text->gen_test();
+  Text->gen_test_pdf ();
 
-  LoadCube();
+  //LoadCube();
 }
 
 void GLWidget::LoadCube() {
@@ -311,11 +311,11 @@ void GLWidget::initializeGL() {
   //vLightPosition = QVector3D (0.0f, 4.0f, 5.0f);
 
 
-  m_camera.translate(QVector3D(0.0f, 0.0f, 10.0f));
+  m_camera.translate(QVector3D(612.0f/2, 792.0f/2, -30.0f));
   // Put the object a little to the front of the camera (the camera is looking
   // at (0.0, 0.0, -1.0))
   actual = factor = -5;
-  m_transform.translate(0.0f, 0.0f, -5.0f);
+  //m_transform.translate(0.0f, 0.0f, 0.0f);
   // Initialize OpenGL Backend
   initializeOpenGLFunctions();
   connectUpdate();
@@ -323,7 +323,7 @@ void GLWidget::initializeGL() {
   // Set global information
   glEnable(GL_DEPTH_TEST);
   glDepthRange(0,1);
-  glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
   // Application-specific initialization
   {
@@ -376,30 +376,33 @@ void GLWidget::initializeGL() {
 
     m_object.release();
 
-    /*
-    m_object.bind();
-    m_normal.create();
-    m_normal.bind();
-    m_normal.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    m_normal.allocate(sg_normals_, normalCount_*sizeof(QVector3D));
+    last_albedo = albedo;
 
-    m_program->setAttributeBuffer(1, GL_FLOAT, 0, 3,0);
-    m_program->enableAttributeArray(1);
-
-    m_object.release();
-    m_vertex.release();
-    m_normal.release();
-    m_program->release();
-    */
+    LoadText();
   }
 }
 
 void GLWidget::update() {
   Input::update();
-  if (Input::buttonPressed(Qt::LeftButton)) {
+  if (Input::buttonPressed(Qt::RightButton)) {
     static const float rotSpeed   = 0.75f;
-    m_transform.rotate(rotSpeed * Input::mouseDelta().x(), Camera3D::LocalUp);
-    m_transform.rotate(rotSpeed * Input::mouseDelta().y(), Camera3D::LocalRight);
+    //m_transform.rotate(rotSpeed * Input::mouseDelta().x(), Camera3D::LocalUp);
+    //m_transform.rotate(rotSpeed * Input::mouseDelta().y(), Camera3D::LocalRight);
+      m_transform.translate(0, 0, -Input::mouseDelta().y());
+  }
+  else if (Input::buttonPressed(Qt::LeftButton)) {
+    static const float rotSpeed   = 0.75f;
+    //m_transform.rotate(rotSpeed * Input::mouseDelta().x(), Camera3D::LocalUp);
+    //m_transform.rotate(rotSpeed * Input::mouseDelta().y(), Camera3D::LocalRight);
+      m_transform.translate(Input::mouseDelta().x(), -Input::mouseDelta().y(), 0);
+  }
+  if (changed) {
+      changed = false;
+      float scale = 200;
+      if (albedo < last_albedo)
+          scale *= -1;
+      m_transform.translate(0, 0, scale);
+      last_albedo = albedo;
   }
   // Schedule a redraw
   QOpenGLWidget::update();
@@ -495,13 +498,11 @@ void GLWidget::paintGL() {
   {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    LoadText ();
     m_object.bind();
     m_program->setUniformValue(u_modelToWorld, m_transform.toMatrix());
     texture->bind();
     glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
     m_object.release();
-    //reload ();
   }
   m_program->release();
 }

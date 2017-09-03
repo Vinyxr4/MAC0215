@@ -1,4 +1,5 @@
 #include "text.h"
+#include <iostream>
 
 text::text (QString font) {
     define_font_type (QString (font));
@@ -14,7 +15,9 @@ void text::bake_atlas() {
         qDebug() << "ruim new face";
 
     int GLYPH_HEIGHT = 1000;
-    int DPI = 250;
+    int DPI = 500;
+
+    FT_Select_Charmap(face , ft_encoding_unicode);
 
     FT_Set_Char_Size(face, 0, GLYPH_HEIGHT, DPI, DPI);
 
@@ -59,6 +62,7 @@ void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
     text_to_render = QString (t);
 
     int i = 0;
+    //int j = 0;
     for (QChar *c = text_to_render.begin(); c != text_to_render.end(); ++c, i += 4) {
         font_vertices.push_back(quad_vertices[i]);
         font_vertices.push_back(quad_vertices[i + 1]);
@@ -113,5 +117,38 @@ void text::gen_test () {
 
     define_text(test_string, vec);
 
-    qDebug () << "Coordenadas:\n" << font_texture;
+    //qDebug () << "Coordenadas:\n" << font_texture;
+}
+
+void text::gen_test_pdf () {
+    define_text_from_pdf (QString ("/home/viniciuspd/Desktop/lista_1.pdf"));
+}
+
+void text::define_text_from_pdf (QString pdf_path) {
+    pdf_extractor *extractor = new pdf_extractor (pdf_path.toStdString(), "../MAC0215/");
+    QString txt;
+    double *bbox;
+    int num_pages;
+
+    extractor->init ();
+    num_pages = extractor->extract ();
+    txt = QString (extractor->get_text(0).c_str());
+    bbox = extractor->get_bbox(0);
+    extractor->end ();
+
+    for (int i = 0; i < 8; ++i) {
+        qDebug () << bbox[i];
+    }
+    std::vector<QVector3D> txt_vertices;
+
+    int i, j;
+    float scale = 0.5;
+    for (i = 0, j = 0; i < txt.size(); ++i, j += 4) {
+        txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 1], 0)*scale);
+        txt_vertices.push_back (QVector3D (bbox[j + 2], bbox[j + 1], 0)*scale);
+        txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 3], 0)*scale);
+        txt_vertices.push_back (QVector3D (bbox[j + 2], bbox[j + 3], 0)*scale);
+    }
+
+    define_text (txt, txt_vertices);
 }

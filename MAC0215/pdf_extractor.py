@@ -33,8 +33,14 @@ class extractor:
 			if isinstance (element, LTChar):
 				encoding = self.pages[-1].encoding
 				self.pages[-1].text.append (element.get_text ().encode (encoding))
+				#self.pages[-1].bbox.append (element.x0)
+				#self.pages[-1].bbox.append (element.y0)
+				#self.pages[-1].bbox.append (element.x0 + element.width * element.size)
+				#self.pages[-1].bbox.append (element.y0 + element.height * element.size)
 				for i in range (0, 4):
 					self.pages[-1].bbox.append (element.bbox[i])
+				#print (element.height)
+				#print (element.y0 + element.height)
 				
 			elif isinstance (element, LTTextBoxHorizontal) or isinstance (element, LTTextLine):
 				self.layout_search (element)

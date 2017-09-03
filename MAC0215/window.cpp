@@ -305,6 +305,7 @@ void Window::valueSh(int nv) {
 }
 void Window::valueAl(int nv) {
     glWidget->albedo = albedo_factor * float(nv)/step_;
+    glWidget->changed = true;
 }
 void Window::valueRg(int nv) {
     glWidget->roughness = float(nv)/step_;

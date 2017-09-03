@@ -9,7 +9,7 @@
 
 class pdf_extractor {
 public:
-    pdf_extractor (std::string path);
+    pdf_extractor (std::string path, std::string envr);
 
     // Set enviroment to init pdf_extractor.py use.
     void init ();
@@ -33,6 +33,7 @@ public:
 private:
     std::string pdf_path;
     PyObject *pModule;
+    std::string env_path;
 };
 
 #endif
