@@ -12,10 +12,6 @@ class MainWindow : public QMainWindow
 public:
     MainWindow();
 
-private slots:
-    void exit();
-    void loadFile();
-
 private:
     Window* window_;
 };

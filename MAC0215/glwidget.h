@@ -29,25 +29,11 @@ public:
     QSize minimumSizeHint() const override;
     QSize sizeHint() const override;
 
-    void loadCube();
-    void loadObj (int indSize, int vertCount, uint *inds, QVector3D *verts, QVector3D *norms);
-    void changeToFlat ();
-    void changeToNorm ();
-    void changeToMean ();
     void connectUpdate();
     void disconnectUpdate();
-    void reload_shader ();
     void LoadText ();
-    void reload ();
 
-    QVector3D difusiveColor;
-    QVector3D ambientColor;
-    QVector3D specularColor;
-    float shininess;
     float albedo, last_albedo;
-    float roughness;
-    int shading = 0;
-    int reflectmodel = 0;
     bool changed = false;
 
     QOpenGLShaderProgram *m_program;
@@ -69,7 +55,6 @@ protected slots:
 
 private:
     void printContextInformation();
-    void LoadCube();
 
     QOpenGLBuffer m_vertex;
     QOpenGLBuffer m_normal;
@@ -81,35 +66,20 @@ private:
     int u_modelToWorld;
     int u_cameraToView;
     int u_worldToCamera;
-    int u_lightPosition;
-    int u_difuseColor;
-    int u_ambientColor;
-    int u_specularColor;
-    int u_shadding;
-    int u_albedo;
-    int u_roughness;
 
     Camera3D m_camera;
     QMatrix4x4 m_projection;
     Transform3D m_transform;
 
-    QVector3D vLightPosition;
-
-    int actual;
-    int factor;
     int step_;
-    int indiceSize_, normalIndiceSize_;
-    int vertexCount_, normalCount_;
-    int m_normalAttr;
+    int indiceSize_;
+    int vertexCount_;
     int m_texAttr;
-    int u_shininess;
-    GLuint* indices_, *normalIndices_;
-    QVector3D color_;
-    QVector3D* sg_vertexes_, *sg_normals_;
+    GLuint* indices_;
+    QVector3D* sg_vertexes_;
     QVector3D *vertices;
-    QVector3D *normals, *flatNormals, *meanNormals;
     QVector2D *Texture, *sg_texture_;
-    GLuint *indices, *normalIndices;
+    GLuint *indices;
 
     QMetaObject::Connection m_connection;
 

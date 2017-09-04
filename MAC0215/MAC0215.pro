@@ -55,13 +55,6 @@ RESOURCES += \
     resource.qrc
 
 DISTFILES += \
-    shaders/BP_noInterp.vert \
-    shaders/BP_noInterp.frag \
-    shaders/BP_interp.vert \
-    shaders/BP_interp.frag \
-    shaders/ON_interp.vert \
-    shaders/ON_interp.frag \
-    shaders/ON_noInterp.vert \
-    shaders/ON_noInterp.frag \
+    shaders/texture.vert \
     shaders/texture.vert
 
