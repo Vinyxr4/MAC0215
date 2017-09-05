@@ -21,6 +21,7 @@ public:
     void define_font_type (QString font);
     void define_text (QString t, std::vector<QVector3D> quad_vertices);
     void bake_atlas ();
+    void bake_mip_atlas (int max_resolution, int max_size, int layers, QString image_path);
     void define_text_from_pdf (QString pdf_path);
     void gen_test ();
     void gen_test_pdf ();
@@ -34,7 +35,7 @@ private:
     FT_Library ft;
     FT_Face face;
 
-    std::vector<glyph> glyph_set;
+    std::vector<std::vector<glyph>> glyph_set;
 };
 
 #endif // TEXT_H

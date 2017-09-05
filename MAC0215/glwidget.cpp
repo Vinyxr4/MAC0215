@@ -20,7 +20,7 @@ GLWidget::GLWidget(int step, QWidget *parent)
       m_program(0) {
   step_ = step;
 
-  Text = new text (QString ("/usr/share/fonts/truetype/ubuntu-font-family/UbuntuMono-R.ttf"));
+  Text = new text (QString ("/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"));
   Text->gen_test_pdf ();
 }
 
