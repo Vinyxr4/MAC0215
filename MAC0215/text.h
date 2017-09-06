@@ -16,24 +16,28 @@
 
 class text {
 public:
-    text(QString font);
+    text(QString font, QString atlas);
 
     void define_font_type (QString font);
+    void define_atlas (QString atlas);
     void define_text (QString t, std::vector<QVector3D> quad_vertices);
     void bake_atlas ();
-    void bake_mip_atlas (int max_resolution, int max_size, int layers, QString image_path);
+    void bake_mip_atlas (int max_resolution, int max_size, int layers);
     void define_text_from_pdf (QString pdf_path);
     void gen_test ();
     void gen_test_pdf ();
+    void set_layer (int l);
 
     std::vector<QVector3D> font_vertices;
     std::vector<QVector2D> font_texture;
 
 private:
     QString font_path;
+    QString atlas_path;
     QString text_to_render;
     FT_Library ft;
     FT_Face face;
+    int layer = 0;
 
     std::vector<std::vector<glyph>> glyph_set;
 };

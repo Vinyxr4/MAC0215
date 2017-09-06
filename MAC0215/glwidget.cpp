@@ -14,17 +14,18 @@
 QOpenGLTexture *texture;
 
 text *Text;
+QString atlas = "teste.png";
 
 GLWidget::GLWidget(int step, QWidget *parent)
     : QOpenGLWidget(parent),
       m_program(0) {
   step_ = step;
 
-  Text = new text (QString ("/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"));
+  Text = new text ("/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf", atlas);
   Text->gen_test_pdf ();
 }
 
-void GLWidget::LoadText () {
+void GLWidget::LoadText (int layers) {
     QVector3D *font_vertex = (QVector3D*) malloc (Text->font_vertices.size () * sizeof (QVector3D));
     QVector2D *font_tex = (QVector2D*) malloc (Text->font_texture.size () * sizeof (QVector2D));
 
@@ -34,11 +35,14 @@ void GLWidget::LoadText () {
     }
 
     delete texture;
-    texture = new QOpenGLTexture (QImage ("atlas.png").mirrored());
+    texture = new QOpenGLTexture (QImage (atlas).mirrored());
 
-    texture->setMinificationFilter(QOpenGLTexture::Nearest);
-    texture->setMagnificationFilter(QOpenGLTexture::Linear);
+    texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    texture->setMagnificationFilter(QOpenGLTexture::LinearMipMapNearest);
     texture->setWrapMode(QOpenGLTexture::MirroredRepeat);
+
+    texture->setMipLevels(layers);
+    texture->generateMipMaps();
 
     m_object.bind();
     m_vertex.bind();
@@ -89,7 +93,7 @@ void GLWidget::disconnectUpdate() {
 }
 
 void GLWidget::initializeGL() {
-  m_camera.translate(QVector3D(612.0f/2, 792.0f/2, -30.0f));
+  m_camera.translate(QVector3D(612.0f/2, 792.0f/2, 1.0f));
 
   initializeOpenGLFunctions();
   connectUpdate();
@@ -144,7 +148,7 @@ void GLWidget::initializeGL() {
 
     last_albedo = albedo;
 
-    LoadText();
+    LoadText(5);
   }
 }
 
@@ -155,7 +159,7 @@ void GLWidget::update() {
   }
   if (changed) {
       changed = false;
-      float scale = 200;
+      float scale = 50;
       if (albedo < last_albedo)
           scale *= -1;
       m_transform.translate(0, 0, scale);

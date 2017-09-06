@@ -2,11 +2,12 @@
 #include <iostream>
 #include <locale>
 
-text::text (QString font) {
+text::text (QString font, QString atlas) {
     define_font_type (QString (font));
+    define_atlas(atlas);
     std::setlocale (LC_ALL, "");
     bake_atlas ();
-    //bake_mip_atlas(500, 1000, 1, "teste.png");
+    //bake_mip_atlas(500, 1000, 3);
 }
 
 uint x_size;
@@ -23,9 +24,7 @@ void text::bake_atlas() {
 
     FT_Select_Charmap(face , ft_encoding_unicode);
     FT_Set_Char_Size(face, 0, GLYPH_HEIGHT, DPI, DPI);
-
     int num_glyphs = face->num_glyphs;
-    qDebug() << num_glyphs;
 
     FT_Size_Metrics_ metric = face->size->metrics;
 
@@ -40,11 +39,10 @@ void text::bake_atlas() {
     int y = 0;
 
     std::locale loc("en_US.UTF-8");
-
     std::vector<glyph> set;
     for (int i = 0; i < num_glyphs; ++i) {
         if (std::isprint((wchar_t) i, loc)) {
-            FT_Load_Char (face, i, FT_LOAD_RENDER| FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT);
+            FT_Load_Char (face, i, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT);
             FT_Bitmap *bmp = &face->glyph->bitmap;
 
             if (x + bmp->width >= texture_width)
@@ -70,12 +68,13 @@ void text::bake_atlas() {
     }
     glyph_set.push_back(set);
 
-    texture.save("atlas.png", Q_NULLPTR, 50);
+    texture.save(atlas_path, Q_NULLPTR, 50);
 
     FT_Done_FreeType(ft);
 }
 
-void text::bake_mip_atlas (int max_resolution, int max_size, int layers, QString image_path) {
+void text::bake_mip_atlas (int max_resolution, int max_size, int layers) {
+
     if (max_resolution > 500 || max_size > 1000) {
         qDebug () << "Too high!\n";
         return;
@@ -96,11 +95,13 @@ void text::bake_mip_atlas (int max_resolution, int max_size, int layers, QString
 
     uint texture_height = (face->size->metrics.height >> 6) * (sqrt(num_glyphs)) * 0.65;
     uint texture_width = texture_height;
-    x_size = texture_width  * 1.5;  //Multiply to get mipmap
+    x_size = texture_width;
     y_size = texture_height;
 
-    std::locale loc("en_US.UTF-8");
+    if (layers > 1)
+        x_size *= 1.5;
 
+    std::locale loc("en_US.UTF-8");
     QImage texture(x_size, y_size, QImage::Format_RGB32);
     QRgb color;
     int x = 0;
@@ -138,7 +139,6 @@ void text::bake_mip_atlas (int max_resolution, int max_size, int layers, QString
             }
         }
         glyph_set.push_back(set);
-        qDebug () << "olha ela\n";
         if ((l+1) % 2)
             last_x += texture_width;
         else
@@ -151,15 +151,16 @@ void text::bake_mip_atlas (int max_resolution, int max_size, int layers, QString
         FT_Set_Char_Size(face, 0, GLYPH_HEIGHT, DPI, DPI);
     }
 
-    texture.save(image_path, Q_NULLPTR, 50);
+    texture.save(atlas_path, Q_NULLPTR, 50);
     FT_Done_FreeType(ft);
 }
 
 void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
     text_to_render = QString (t);
 
+    set_layer (0);
+
     int i = 0;
-    //int j = 0;
     for (QChar *c = text_to_render.begin(); c != text_to_render.end(); ++c, i += 4) {
         font_vertices.push_back(quad_vertices[i]);
         font_vertices.push_back(quad_vertices[i + 1]);
@@ -168,7 +169,7 @@ void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
         font_vertices.push_back(quad_vertices[i + 1]);
         font_vertices.push_back(quad_vertices[i + 3]);
 
-        glyph g = glyph_set[0][c->unicode()];
+        glyph g = glyph_set[layer][c->unicode()];
 
         float x_offset = (1.0 * g.get_x_offset()) / x_size;
         float y_offset = (1.0 * g.get_y_offset()) / y_size;
@@ -184,8 +185,16 @@ void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
     }
 }
 
+void text::set_layer (int l) {
+    layer = l;
+}
+
 void text::define_font_type (QString font) {
     font_path = font;
+}
+
+void text::define_atlas (QString atlas) {
+    atlas_path = atlas;
 }
 
 void text::gen_test () {

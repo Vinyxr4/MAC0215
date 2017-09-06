@@ -31,7 +31,7 @@ public:
 
     void connectUpdate();
     void disconnectUpdate();
-    void LoadText ();
+    void LoadText (int layers);
 
     float albedo, last_albedo;
     bool changed = false;
@@ -80,6 +80,8 @@ private:
     QVector3D *vertices;
     QVector2D *Texture, *sg_texture_;
     GLuint *indices;
+
+    float dist_to_pages = -100.0;
 
     QMetaObject::Connection m_connection;
 
