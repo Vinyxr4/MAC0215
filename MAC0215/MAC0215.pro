@@ -8,6 +8,8 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
+QMAKE_CXXFLAGS += -Wsign-compare
+
 SOURCES += main.cpp \
     mainwindow.cpp \
     window.cpp \

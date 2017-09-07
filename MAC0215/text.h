@@ -23,6 +23,7 @@ public:
     void define_text (QString t, std::vector<QVector3D> quad_vertices);
     void bake_atlas ();
     void bake_mip_atlas (int max_resolution, int max_size, int layers);
+    void bake_dist_transf ();
     void define_text_from_pdf (QString pdf_path);
     void gen_test ();
     void gen_test_pdf ();
@@ -40,6 +41,9 @@ private:
     int layer = 0;
 
     std::vector<std::vector<glyph>> glyph_set;
+
+    float dist (std::vector<std::vector<int>> img, int row, int col);
+    std::vector<int> closest (std::vector<std::vector<int>> img, std::vector<std::vector<bool>> &visited, int row, int col);
 };
 
 #endif // TEXT_H

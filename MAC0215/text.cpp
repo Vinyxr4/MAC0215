@@ -5,8 +5,13 @@
 text::text (QString font, QString atlas) {
     define_font_type (QString (font));
     define_atlas(atlas);
+
     std::setlocale (LC_ALL, "");
-    bake_atlas ();
+
+    bake_dist_transf();
+
+
+    //bake_atlas ();
     //bake_mip_atlas(500, 1000, 3);
 }
 
@@ -153,6 +158,121 @@ void text::bake_mip_atlas (int max_resolution, int max_size, int layers) {
 
     texture.save(atlas_path, Q_NULLPTR, 50);
     FT_Done_FreeType(ft);
+}
+
+
+void text::bake_dist_transf () {
+    if (FT_Init_FreeType (&ft))
+        qDebug() << "ruim init";
+    if(FT_New_Face(ft, font_path.toStdString().c_str(), 0, &face))
+        qDebug() << "ruim new face";
+
+    int GLYPH_HEIGHT = 1000;
+    int DPI = 500;
+
+    FT_Select_Charmap(face , ft_encoding_unicode);
+    FT_Set_Char_Size(face, 0, GLYPH_HEIGHT, DPI, DPI);
+    int num_glyphs = face->num_glyphs;
+
+    FT_Size_Metrics_ metric = face->size->metrics;
+
+    uint texture_height = (metric.height >> 6) * (sqrt(num_glyphs));
+    uint texture_width = texture_height;
+    x_size = texture_width;
+    y_size = texture_height;
+
+    QImage texture(texture_width, texture_height, QImage::Format_RGB32);
+    QRgb color;
+    int x = 0;
+    int y = 0;
+
+    std::locale loc("en_US.UTF-8");
+    std::vector<glyph> set;
+    for (int i = 0; i < num_glyphs; ++i) {
+        if (std::isprint((wchar_t) i, loc)) {
+            std::vector<std::vector<int>> img;
+            qDebug () << i;
+            FT_Load_Char (face, i, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT);
+            FT_Bitmap *bmp = &face->glyph->bitmap;
+
+            if (x + bmp->width >= texture_width)
+                x = 0, y += (1 + (face->size->metrics.height >> 6));
+
+            for (uint row = 0; row < bmp->rows; ++row) {
+                std::vector<int> line;
+                for (uint col = 0; col < bmp->width; ++col) {
+                    if (bmp->buffer[row * bmp->pitch + col])
+                        line.push_back(255);
+                    else line.push_back(0);
+                }
+                img.push_back(line);
+            }
+
+            for (uint row = 0; row < bmp->rows; ++row) {
+                for (uint col = 0; col < bmp->width; ++col) {
+                    //qDebug () << row << col;
+                    int max = bmp->rows;
+                    if ((int) bmp->width > max) max = bmp->width;
+                    int color_cmp = (int) (255 * (0.5 * dist (img, row, col)/max + 0.5));
+                    //qDebug () << color_cmp;
+                    color = qRgb (color_cmp,color_cmp,color_cmp);
+                    texture.setPixel(col + x, row + y, color);
+                }
+            }
+
+            glyph *g = new glyph (x, y, bmp->rows, bmp->width, i);
+            set.push_back (*g);
+            x +=  1 + bmp->width;
+        }
+        else {
+            glyph *g = new glyph (0, 0, 0, 0, i);
+            set.push_back (*g);
+        }
+    }
+    glyph_set.push_back(set);
+
+    texture.save("teste.png", Q_NULLPTR, 50);
+    FT_Done_FreeType(ft);
+}
+
+float text::dist (std::vector<std::vector<int>> img, int row, int col) {
+    std::vector<std::vector<bool>> visited;
+
+    for (int i = 0; i < (int) img.size(); ++i) {
+        std::vector<bool> visit_line;
+        for (int j = 0; j < (int) img[0].size(); ++j)
+            visit_line.push_back(false);
+        visited.push_back(visit_line);
+    }
+    std::vector<int> pair = closest (img, visited, row, col);
+
+    float d = sqrt ((pair[0] - row) * (pair[0] - row) + (pair[1] - col) * (pair[1] - col));
+    if (!img[row][col])
+        d *= -1;
+
+    return d;
+}
+
+std::vector<int> text::closest (std::vector<std::vector<int>> img, std::vector<std::vector<bool>> &visited,  int row, int col) {
+    std::vector<int> pair (2);
+    pair[0] = row;
+    pair[1] = col;
+
+    visited[row][col] = true;
+    for (int i = row - 1; i <= row + 1; ++i) {
+        if (i < 0 ||  i >= (int) img.size()) continue;
+        for (int j = col - 1; j <= col + 1; ++j) {
+            if (j < 0 || j >= (int) img[0].size () || visited[i][j]) continue;
+            if (img[i][j] != img[row][col]) {
+                pair[0] = i, pair[1] = j;
+                return pair;
+            }
+            else
+                pair = closest (img, visited, i, j);
+        }
+    }
+
+    return pair;
 }
 
 void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
