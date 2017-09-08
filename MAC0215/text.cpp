@@ -2,6 +2,10 @@
 #include <iostream>
 #include <locale>
 
+std::vector<std::vector<int>> dt (std::vector<std::vector<int>> img);
+void Closest_raster (std::vector<std::vector<int>> &transf, int row, int col);
+void Closest_anti_raster (std::vector<std::vector<int>> &transf, int row, int col);
+
 text::text (QString font, QString atlas) {
     define_font_type (QString (font));
     define_atlas(atlas);
@@ -10,6 +14,30 @@ text::text (QString font, QString atlas) {
 
     bake_dist_transf();
 
+    /*
+    std::vector<std::vector<int>> test, transf1, transf2;
+
+    for (int i = 0; i < (int) 7; ++i) {
+        std::vector<int> line;
+        for (int j = 0; j < (int) 8; ++j)
+            line.push_back(1);
+        test.push_back(line);
+    }
+    //test[6][7] = 0;
+
+    transf1 = dt (test);
+    for (int i = 0; i < (int) 7; ++i)
+        for (int j = 0; j < (int) 8; ++j)
+            test[i][j] = (test[i][j] + 1) % 2;
+    transf2 = dt (test);
+
+    for (int i = 0; i < (int) 7; ++i)
+        for (int j = 0; j < (int) 8; ++j)
+            if (!transf1[i][j])
+                transf1[i][j] = -transf2[i][j];
+
+    qDebug () << transf1;
+    */
 
     //bake_atlas ();
     //bake_mip_atlas(500, 1000, 3);
@@ -190,8 +218,8 @@ void text::bake_dist_transf () {
     std::vector<glyph> set;
     for (int i = 0; i < num_glyphs; ++i) {
         if (std::isprint((wchar_t) i, loc)) {
-            std::vector<std::vector<int>> img;
-            qDebug () << i;
+            std::vector<std::vector<int>> img, transf1, transf2;
+            //qDebug () << i;
             FT_Load_Char (face, i, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT);
             FT_Bitmap *bmp = &face->glyph->bitmap;
 
@@ -202,19 +230,28 @@ void text::bake_dist_transf () {
                 std::vector<int> line;
                 for (uint col = 0; col < bmp->width; ++col) {
                     if (bmp->buffer[row * bmp->pitch + col])
-                        line.push_back(255);
+                        line.push_back(1);
                     else line.push_back(0);
                 }
                 img.push_back(line);
             }
 
-            for (uint row = 0; row < bmp->rows; ++row) {
-                for (uint col = 0; col < bmp->width; ++col) {
-                    //qDebug () << row << col;
-                    int max = bmp->rows;
-                    if ((int) bmp->width > max) max = bmp->width;
-                    int color_cmp = (int) (255 * (0.5 * dist (img, row, col)/max + 0.5));
-                    //qDebug () << color_cmp;
+            transf1 = dt (img);
+            for (int i = 0; i < (int) img.size(); ++i)
+                for (int j = 0; j < (int) img[0].size(); ++j)
+                    img[i][j] = (img[i][j] + 1) % 2;
+            transf2 = dt (img);
+
+            for (int i = 0; i < (int) img.size(); ++i)
+                for (int j = 0; j < (int) img[0].size(); ++j)
+                    if (!transf1[i][j])
+                        transf1[i][j] = -transf2[i][j];
+
+            for (uint row = 0; row < img.size(); ++row) {
+                for (uint col = 0; col < img[0].size(); ++col) {
+                    float max = img[0].size();
+                    if (img[0].size () > max) max = img[0].size ();
+                    int color_cmp = (int) (255 * (0.5 * transf1[row][col]/max + 0.5));
                     color = qRgb (color_cmp,color_cmp,color_cmp);
                     texture.setPixel(col + x, row + y, color);
                 }
@@ -231,8 +268,60 @@ void text::bake_dist_transf () {
     }
     glyph_set.push_back(set);
 
-    texture.save("teste.png", Q_NULLPTR, 50);
+    texture.save(atlas_path, Q_NULLPTR, 50);
     FT_Done_FreeType(ft);
+}
+
+std::vector<std::vector<int>> dt (std::vector<std::vector<int>> img) {
+    std::vector<std::vector<int>> transf (img);
+
+    for (int i = 0; i < img.size(); ++i)
+        for (int j = 0; j < img[0].size(); ++j)
+            if (transf[i][j])
+                Closest_raster (transf, i, j);
+
+    for (int i = img.size() - 1; i >= 0; --i)
+        for (int j = img[0].size() - 1; j >= 0; --j)
+            if (transf[i][j])
+                Closest_anti_raster (transf, i, j);
+
+    return transf;
+}
+
+void Closest_raster (std::vector<std::vector<int>> &transf, int row, int col) {
+    int cl = transf[0].size ();
+    if (transf.size ())
+        cl = transf.size ();
+
+    for (int i = row - 1; i <= row; ++i) {
+        if (i < 0 || i == transf.size()) continue;
+        for (int j = col - 1; j <= col + 1; ++j) {
+            if (j < 0 || j == transf[0].size()) continue;
+            if (i == row && j == col) break;
+            if (transf[i][j] < cl)
+                cl = transf[i][j];
+        }
+    }
+    transf[row][col] = 1 + cl;
+}
+
+void Closest_anti_raster (std::vector<std::vector<int>> &transf, int row, int col) {
+    int cl = transf[0].size ();
+    if (transf.size ())
+        cl = transf.size ();
+
+    for (int i = row + 1; i >= row; --i) {
+        if (i < 0 || i == transf.size()) continue;
+        for (int j = col + 1; j >= col - 1; --j) {
+            if (j < 0 || j == transf[0].size()) continue;
+            if (i == row && j == col) break;
+            if (transf[i][j] < cl)
+                cl = transf[i][j];
+        }
+    }
+
+    if (1 + cl < transf[row][col])
+        transf[row][col] = 1 + cl;
 }
 
 float text::dist (std::vector<std::vector<int>> img, int row, int col) {

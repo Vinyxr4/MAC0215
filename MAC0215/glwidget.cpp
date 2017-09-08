@@ -37,11 +37,12 @@ void GLWidget::LoadText (int layers) {
     delete texture;
     texture = new QOpenGLTexture (QImage (atlas).mirrored());
 
-    texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-    texture->setMagnificationFilter(QOpenGLTexture::LinearMipMapNearest);
+    //texture->setMipLevels(layers);
+
+    texture->setMinificationFilter(QOpenGLTexture::Linear);
+    texture->setMagnificationFilter(QOpenGLTexture::Linear);
     texture->setWrapMode(QOpenGLTexture::MirroredRepeat);
 
-    texture->setMipLevels(layers);
     texture->generateMipMaps();
 
     m_object.bind();
