@@ -17,17 +17,31 @@
 
 class text {
 public:
+    // Constructor: takes a font path and a path to save the atlas
     text(QString font, QString atlas);
 
-    void define_font_type (QString font);
-    void define_atlas (QString atlas);
-    void define_text (QString t, std::vector<QVector3D> quad_vertices);
+    // Wrapper to trivially bake the atlas
     void bake_atlas ();
+
+    // Bakes a mipmap atlas with layers, max_size, and max_resolution
     void bake_mip_atlas (int max_resolution, int max_size, int layers);
+
+    // Wrapper to bake an atlas using distance transform
     void bake_dist_transf ();
+
+    // Defines the text to be rendered from a pdf text
     void define_text_from_pdf (QString pdf_path);
+
+    // Defines the text to be rendered from a Qstring t, on the quad_vertices
+    void define_text (QString t, std::vector<QVector3D> quad_vertices);
+
+    // Generates a simple test
     void gen_test ();
+
+    // Generates a test using a pdf file
     void gen_test_pdf ();
+
+    // Set the number of layers
     void set_layer (int l);
 
     std::vector<QVector3D> font_vertices;
@@ -42,7 +56,14 @@ private:
     std::vector<std::vector<glyph>> glyph_set;
     QString code_path = "../MAC0215/";
 
+    // Bakes an atlas
     void bake ();
+
+    // Defines the font to be used
+    void define_font_type (QString font);
+
+    // Defines the path used to save the baked atlas
+    void define_atlas (QString atlas);
 };
 
 #endif // TEXT_H

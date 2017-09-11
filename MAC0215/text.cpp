@@ -2,14 +2,13 @@
 #include <iostream>
 #include <locale>
 
-std::vector<std::vector<int>> dt (std::vector<std::vector<int>> img);
-void Closest_raster (std::vector<std::vector<int>> &transf, int row, int col);
-void Closest_anti_raster (std::vector<std::vector<int>> &transf, int row, int col);
-
+// Constructor
 text::text (QString font, QString atlas) {
     define_font_type (QString (font));
     define_atlas(atlas);
 }
+
+/*** Public metthods ***/
 
 void text::bake_atlas() {
     bake_type = 0;
@@ -103,6 +102,105 @@ void text::bake_mip_atlas (int max_resolution, int max_size, int layers) {
     FT_Done_FreeType(ft);
 }
 
+void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
+    text_to_render = QString (t);
+
+    set_layer (0);
+
+    int i = 0;
+    for (QChar *c = text_to_render.begin(); c != text_to_render.end(); ++c, i += 4) {
+        font_vertices.push_back(quad_vertices[i]);
+        font_vertices.push_back(quad_vertices[i + 1]);
+        font_vertices.push_back(quad_vertices[i + 2]);
+        font_vertices.push_back(quad_vertices[i + 2]);
+        font_vertices.push_back(quad_vertices[i + 1]);
+        font_vertices.push_back(quad_vertices[i + 3]);
+
+        glyph g = glyph_set[layer][c->unicode()];
+
+        float x_offset = (1.0 * g.get_x_offset()) / x_size;
+        float y_offset = (1.0 * g.get_y_offset()) / y_size;
+        float height = (1.0 * g.get_height ()) / y_size;
+        float width = (1.0 * g.get_width ()) / x_size;
+
+        font_texture.push_back(QVector2D(x_offset, 1 - (y_offset + height)));
+        font_texture.push_back(QVector2D(x_offset + width, 1 - (y_offset + height)));
+        font_texture.push_back(QVector2D(x_offset, 1 - y_offset));
+        font_texture.push_back(QVector2D(x_offset, 1 - y_offset));
+        font_texture.push_back(QVector2D(x_offset + width, 1 - (y_offset + height)));
+        font_texture.push_back(QVector2D(x_offset + width, 1 - y_offset));
+    }
+}
+
+void text::set_layer (int l) {
+    layer = l;
+}
+
+void text::gen_test () {
+    QString test_string ("Olá!");
+
+    std::vector<QVector3D> vec;
+    vec.push_back(QVector3D (-2.0, 0, 0));
+    vec.push_back(QVector3D (-1.5, 0, 0));
+    vec.push_back(QVector3D (-2.0, 0.5, 0));
+    vec.push_back(QVector3D (-1.5, 0.5, 0));
+
+    vec.push_back(QVector3D (-1.5, 0, 0));
+    vec.push_back(QVector3D (-1.0, 0, 0));
+    vec.push_back(QVector3D (-1.5, 0.5, 0));
+    vec.push_back(QVector3D (-1.0, 0.5, 0));
+
+    vec.push_back(QVector3D (-1.0, 0, 0));
+    vec.push_back(QVector3D (-0.5, 0, 0));
+    vec.push_back(QVector3D (-1.0, 0.5, 0));
+    vec.push_back(QVector3D (-0.5, 0.5, 0));
+
+    vec.push_back(QVector3D (-0.5, 0, 0));
+    vec.push_back(QVector3D (-0.3, 0, 0));
+    vec.push_back(QVector3D (-0.5, 0.5, 0));
+    vec.push_back(QVector3D (-0.3, 0.5, 0));
+
+    define_text(test_string, vec);
+
+    //qDebug () << "Coordenadas:\n" << font_texture;
+}
+
+void text::gen_test_pdf () {
+    QString example_path = code_path + "pdf/lista_1.pdf";
+    define_text_from_pdf (example_path);
+}
+
+void text::define_text_from_pdf (QString pdf_path) {
+    pdf_extractor *extractor = new pdf_extractor (pdf_path.toStdString(), code_path.toStdString());
+    QString txt;
+    double *bbox;
+    int num_pages;
+
+    extractor->init ();
+    num_pages = extractor->extract ();
+    txt = QString (extractor->get_text(0).c_str());
+    bbox = extractor->get_bbox(0);
+    extractor->end ();
+
+    for (int i = 0; i < 8; ++i) {
+        qDebug () << bbox[i];
+    }
+    std::vector<QVector3D> txt_vertices;
+
+    int i, j;
+    float scale = 0.5;
+    for (i = 0, j = 0; i < txt.size(); ++i, j += 4) {
+        txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 1], 0)*scale);
+        txt_vertices.push_back (QVector3D (bbox[j + 2], bbox[j + 1], 0)*scale);
+        txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 3], 0)*scale);
+        txt_vertices.push_back (QVector3D (bbox[j + 2], bbox[j + 3], 0)*scale);
+    }
+
+    define_text (txt, txt_vertices);
+}
+
+/*** Private metthods ***/
+
 void text::bake () {
     if (FT_Init_FreeType (&ft))
         qDebug() << "ruim init";
@@ -183,107 +281,10 @@ void text::bake () {
     FT_Done_FreeType(ft);
 }
 
-void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
-    text_to_render = QString (t);
-
-    set_layer (0);
-
-    int i = 0;
-    for (QChar *c = text_to_render.begin(); c != text_to_render.end(); ++c, i += 4) {
-        font_vertices.push_back(quad_vertices[i]);
-        font_vertices.push_back(quad_vertices[i + 1]);
-        font_vertices.push_back(quad_vertices[i + 2]);
-        font_vertices.push_back(quad_vertices[i + 2]);
-        font_vertices.push_back(quad_vertices[i + 1]);
-        font_vertices.push_back(quad_vertices[i + 3]);
-
-        glyph g = glyph_set[layer][c->unicode()];
-
-        float x_offset = (1.0 * g.get_x_offset()) / x_size;
-        float y_offset = (1.0 * g.get_y_offset()) / y_size;
-        float height = (1.0 * g.get_height ()) / y_size;
-        float width = (1.0 * g.get_width ()) / x_size;
-
-        font_texture.push_back(QVector2D(x_offset, 1 - (y_offset + height)));
-        font_texture.push_back(QVector2D(x_offset + width, 1 - (y_offset + height)));
-        font_texture.push_back(QVector2D(x_offset, 1 - y_offset));
-        font_texture.push_back(QVector2D(x_offset, 1 - y_offset));
-        font_texture.push_back(QVector2D(x_offset + width, 1 - (y_offset + height)));
-        font_texture.push_back(QVector2D(x_offset + width, 1 - y_offset));
-    }
-}
-
-void text::set_layer (int l) {
-    layer = l;
-}
-
 void text::define_font_type (QString font) {
     font_path = font;
 }
 
 void text::define_atlas (QString atlas) {
     atlas_path = atlas;
-}
-
-void text::gen_test () {
-    QString test_string ("Olá!");
-
-    std::vector<QVector3D> vec;
-    vec.push_back(QVector3D (-2.0, 0, 0));
-    vec.push_back(QVector3D (-1.5, 0, 0));
-    vec.push_back(QVector3D (-2.0, 0.5, 0));
-    vec.push_back(QVector3D (-1.5, 0.5, 0));
-
-    vec.push_back(QVector3D (-1.5, 0, 0));
-    vec.push_back(QVector3D (-1.0, 0, 0));
-    vec.push_back(QVector3D (-1.5, 0.5, 0));
-    vec.push_back(QVector3D (-1.0, 0.5, 0));
-
-    vec.push_back(QVector3D (-1.0, 0, 0));
-    vec.push_back(QVector3D (-0.5, 0, 0));
-    vec.push_back(QVector3D (-1.0, 0.5, 0));
-    vec.push_back(QVector3D (-0.5, 0.5, 0));
-
-    vec.push_back(QVector3D (-0.5, 0, 0));
-    vec.push_back(QVector3D (-0.3, 0, 0));
-    vec.push_back(QVector3D (-0.5, 0.5, 0));
-    vec.push_back(QVector3D (-0.3, 0.5, 0));
-
-    define_text(test_string, vec);
-
-    //qDebug () << "Coordenadas:\n" << font_texture;
-}
-
-void text::gen_test_pdf () {
-    QString example_path = code_path + "pdf/lista_1.pdf";
-    define_text_from_pdf (example_path);
-}
-
-void text::define_text_from_pdf (QString pdf_path) {
-    pdf_extractor *extractor = new pdf_extractor (pdf_path.toStdString(), code_path.toStdString());
-    QString txt;
-    double *bbox;
-    int num_pages;
-
-    extractor->init ();
-    num_pages = extractor->extract ();
-    txt = QString (extractor->get_text(0).c_str());
-    bbox = extractor->get_bbox(0);
-    extractor->end ();
-
-    for (int i = 0; i < 8; ++i) {
-        qDebug () << bbox[i];
-    }
-    std::vector<QVector3D> txt_vertices;
-
-    int i, j;
-    float scale = 0.5;
-    for (i = 0, j = 0; i < txt.size(); ++i, j += 4) {
-        txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 1], 0)*scale);
-        txt_vertices.push_back (QVector3D (bbox[j + 2], bbox[j + 1], 0)*scale);
-        txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 3], 0)*scale);
-        txt_vertices.push_back (QVector3D (bbox[j + 2], bbox[j + 3], 0)*scale);
-    }
-
-    define_text (txt, txt_vertices);
 }
