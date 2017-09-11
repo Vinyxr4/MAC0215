@@ -51,3 +51,4 @@ de MAC0420-2017, com algumas modificações. Os componentes criados por mim são
   
   * O shader texture usa a textura passada para definir o valor alpha de cada pixel. Assim,
     pixels mapeados a regiões da textura em que existe algum glifo ficam visíveis.
+
