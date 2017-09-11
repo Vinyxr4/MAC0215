@@ -9,101 +9,16 @@ void Closest_anti_raster (std::vector<std::vector<int>> &transf, int row, int co
 text::text (QString font, QString atlas) {
     define_font_type (QString (font));
     define_atlas(atlas);
-
-    std::setlocale (LC_ALL, "");
-
-    bake_dist_transf();
-
-    /*
-    std::vector<std::vector<int>> test, transf1, transf2;
-
-    for (int i = 0; i < (int) 7; ++i) {
-        std::vector<int> line;
-        for (int j = 0; j < (int) 8; ++j)
-            line.push_back(1);
-        test.push_back(line);
-    }
-    //test[6][7] = 0;
-
-    transf1 = dt (test);
-    for (int i = 0; i < (int) 7; ++i)
-        for (int j = 0; j < (int) 8; ++j)
-            test[i][j] = (test[i][j] + 1) % 2;
-    transf2 = dt (test);
-
-    for (int i = 0; i < (int) 7; ++i)
-        for (int j = 0; j < (int) 8; ++j)
-            if (!transf1[i][j])
-                transf1[i][j] = -transf2[i][j];
-
-    qDebug () << transf1;
-    */
-
-    //bake_atlas ();
-    //bake_mip_atlas(500, 1000, 3);
 }
 
-uint x_size;
-uint y_size;
-
 void text::bake_atlas() {
-    if (FT_Init_FreeType (&ft))
-        qDebug() << "ruim init";
-    if(FT_New_Face(ft, font_path.toStdString().c_str(), 0, &face))
-        qDebug() << "ruim new face";
+    bake_type = 0;
+    bake ();
+}
 
-    int GLYPH_HEIGHT = 1000;
-    int DPI = 500;
-
-    FT_Select_Charmap(face , ft_encoding_unicode);
-    FT_Set_Char_Size(face, 0, GLYPH_HEIGHT, DPI, DPI);
-    int num_glyphs = face->num_glyphs;
-
-    FT_Size_Metrics_ metric = face->size->metrics;
-
-    uint texture_height = (metric.height >> 6) * (sqrt(num_glyphs));
-    uint texture_width = texture_height;
-    x_size = texture_width;
-    y_size = texture_height;
-
-    QImage texture(texture_width, texture_height, QImage::Format_RGB32);
-    QRgb color;
-    int x = 0;
-    int y = 0;
-
-    std::locale loc("en_US.UTF-8");
-    std::vector<glyph> set;
-    for (int i = 0; i < num_glyphs; ++i) {
-        if (std::isprint((wchar_t) i, loc)) {
-            FT_Load_Char (face, i, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT);
-            FT_Bitmap *bmp = &face->glyph->bitmap;
-
-            if (x + bmp->width >= texture_width)
-                x = 0, y += (1 + (face->size->metrics.height >> 6));
-
-            for (uint row = 0; row < bmp->rows; ++row) {
-                for (uint col = 0; col < bmp->width; ++col) {
-                    int color_cmp = 0;
-                    if (bmp->buffer[row * bmp->pitch + col])
-                        color_cmp = 255;
-                    color = qRgb (color_cmp,color_cmp,color_cmp);
-                    texture.setPixel(col + x, row + y, color);
-                }
-            }
-            glyph *g = new glyph (x, y, bmp->rows, bmp->width, i);
-            set.push_back (*g);
-            x +=  1 + bmp->width;
-        }
-        else {
-            glyph *g = new glyph (0, 0, 0, 0, i);
-            set.push_back (*g);
-        }
-    }
-    glyph_set.push_back(set);
-
-    texture.save(atlas_path, Q_NULLPTR, 50);
-
-    FT_Done_FreeType(ft);
+void text::bake_dist_transf () {
+    bake_type = 1;
+    bake ();
 }
 
 void text::bake_mip_atlas (int max_resolution, int max_size, int layers) {
@@ -188,8 +103,7 @@ void text::bake_mip_atlas (int max_resolution, int max_size, int layers) {
     FT_Done_FreeType(ft);
 }
 
-
-void text::bake_dist_transf () {
+void text::bake () {
     if (FT_Init_FreeType (&ft))
         qDebug() << "ruim init";
     if(FT_New_Face(ft, font_path.toStdString().c_str(), 0, &face))
@@ -216,10 +130,12 @@ void text::bake_dist_transf () {
 
     std::locale loc("en_US.UTF-8");
     std::vector<glyph> set;
+
+
     for (int i = 0; i < num_glyphs; ++i) {
         if (std::isprint((wchar_t) i, loc)) {
             std::vector<std::vector<int>> img;
-            //qDebug () << i;
+
             FT_Load_Char (face, i, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT);
             FT_Bitmap *bmp = &face->glyph->bitmap;
 
@@ -237,7 +153,8 @@ void text::bake_dist_transf () {
             }
 
             distance_transform transform (img);
-            transform.chess_board ();
+            if (bake_type == 1)
+                transform.chess_board ();
 
             for (uint row = 0; row < img.size(); ++row) {
                 for (uint col = 0; col < img[0].size(); ++col) {
@@ -259,6 +176,7 @@ void text::bake_dist_transf () {
             set.push_back (*g);
         }
     }
+
     glyph_set.push_back(set);
 
     texture.save(atlas_path, Q_NULLPTR, 50);
@@ -337,11 +255,12 @@ void text::gen_test () {
 }
 
 void text::gen_test_pdf () {
-    define_text_from_pdf (QString ("/home/viniciuspd/Desktop/lista_1.pdf"));
+    QString example_path = code_path + "pdf/lista_1.pdf";
+    define_text_from_pdf (example_path);
 }
 
 void text::define_text_from_pdf (QString pdf_path) {
-    pdf_extractor *extractor = new pdf_extractor (pdf_path.toStdString(), "../MAC0215/");
+    pdf_extractor *extractor = new pdf_extractor (pdf_path.toStdString(), code_path.toStdString());
     QString txt;
     double *bbox;
     int num_pages;

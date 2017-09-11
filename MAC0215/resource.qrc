@@ -2,5 +2,32 @@
     <qresource prefix="/">
         <file>shaders/texture.frag</file>
         <file>shaders/texture.vert</file>
+        <file>pdf/lista_1.pdf</file>
+        <file>camera3d.cpp</file>
+        <file>camera3d.h</file>
+        <file>distance_transform.cpp</file>
+        <file>distance_transform.h</file>
+        <file>glwidget.cpp</file>
+        <file>glwidget.h</file>
+        <file>glyph.cpp</file>
+        <file>glyph.h</file>
+        <file>input.cpp</file>
+        <file>input.h</file>
+        <file>main.cpp</file>
+        <file>mainwindow.cpp</file>
+        <file>mainwindow.h</file>
+        <file>moc_glwidget.cpp</file>
+        <file>moc_mainwindow.cpp</file>
+        <file>moc_predefs.h</file>
+        <file>moc_window.cpp</file>
+        <file>pdf_extractor.cpp</file>
+        <file>pdf_extractor.h</file>
+        <file>qrc_resource.cpp</file>
+        <file>text.cpp</file>
+        <file>text.h</file>
+        <file>transform3d.cpp</file>
+        <file>transform3d.h</file>
+        <file>window.cpp</file>
+        <file>window.h</file>
     </qresource>
 </RCC>

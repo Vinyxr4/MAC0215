@@ -4,6 +4,7 @@
 // Constructor
 distance_transform::distance_transform (image new_image) {
     original_image = image (new_image);
+    transform = image (original_image);
 }
 
 /*** Public methods ***/

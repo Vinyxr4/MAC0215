@@ -34,17 +34,15 @@ public:
     std::vector<QVector2D> font_texture;
 
 private:
-    QString font_path;
-    QString atlas_path;
-    QString text_to_render;
+    QString font_path, atlas_path, text_to_render;
     FT_Library ft;
     FT_Face face;
-    int layer = 0;
-
+    int layer = 0, bake_type = 0;
+    uint x_size, y_size;
     std::vector<std::vector<glyph>> glyph_set;
+    QString code_path = "../MAC0215/";
 
-    float dist (std::vector<std::vector<int>> img, int row, int col);
-    std::vector<int> closest (std::vector<std::vector<int>> img, std::vector<std::vector<bool>> &visited, int row, int col);
+    void bake ();
 };
 
 #endif // TEXT_H
