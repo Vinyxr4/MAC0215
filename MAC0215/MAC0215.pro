@@ -19,7 +19,8 @@ SOURCES += main.cpp \
     transform3d.cpp \
     glyph.cpp \
     text.cpp \
-    pdf_extractor.cpp
+    pdf_extractor.cpp \
+    distance_transform.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -47,7 +48,8 @@ HEADERS += \
     transform3d.h \
     glyph.h \
     text.h \
-    pdf_extractor.h
+    pdf_extractor.h \
+    distance_transform.h
 
 LIBS += -lz -lfreetype -lpython2.7
 INCLUDEPATH += /usr/include/freetype2

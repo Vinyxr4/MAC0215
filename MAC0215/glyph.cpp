@@ -7,15 +7,6 @@ glyph::glyph (int x, int y, int h, int w, char c) {
     width = w;
     rep = c;
 }
-/*
-glyph glyph::get_glyph (char c) {
-    for (int i = 0; i < char_list.size() && char_list[i] != c; ++i);
-
-    if (i < char_list.size ()) {
-        return
-    }
-}
-*/
 
 char glyph::get_char () {
     return rep;

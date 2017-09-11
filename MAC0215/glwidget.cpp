@@ -21,6 +21,7 @@ GLWidget::GLWidget(int step, QWidget *parent)
       m_program(0) {
   step_ = step;
 
+
   Text = new text ("/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf", atlas);
   Text->gen_test_pdf ();
 }
@@ -94,7 +95,7 @@ void GLWidget::disconnectUpdate() {
 }
 
 void GLWidget::initializeGL() {
-  m_camera.translate(QVector3D(612.0f/2, 792.0f/2, 1.0f));
+  //m_camera.translate(QVector3D(612.0f/2, 792.0f/2, 1.0f));
 
   initializeOpenGLFunctions();
   connectUpdate();
@@ -150,6 +151,7 @@ void GLWidget::initializeGL() {
     last_albedo = albedo;
 
     LoadText(5);
+    glViewport(0, 0, 10, 10);
   }
 }
 
@@ -191,8 +193,12 @@ void GLWidget::paintGL() {
 }
 
 void GLWidget::resizeGL(int w, int h) {
+  float zoom_factor = 0.95;
+  float zoom = (1 - zoom_factor);
+
   m_projection.setToIdentity();
-  m_projection.perspective(30.0f, w / float(h), 1.0f, 1000.0f);
+  m_projection.perspective(180.0f * zoom, w / float(h), 1.0f, 1000.0f);
+  //glViewport(-100, 0, 10, 10);
 }
 
 void GLWidget::mousePressEvent(QMouseEvent *event) {

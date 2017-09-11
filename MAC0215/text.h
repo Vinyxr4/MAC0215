@@ -13,6 +13,7 @@
 
 #include "glyph.h"
 #include "pdf_extractor.h"
+#include "distance_transform.h"
 
 class text {
 public:
