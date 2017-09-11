@@ -265,46 +265,6 @@ void text::bake_dist_transf () {
     FT_Done_FreeType(ft);
 }
 
-float text::dist (std::vector<std::vector<int>> img, int row, int col) {
-    std::vector<std::vector<bool>> visited;
-
-    for (int i = 0; i < (int) img.size(); ++i) {
-        std::vector<bool> visit_line;
-        for (int j = 0; j < (int) img[0].size(); ++j)
-            visit_line.push_back(false);
-        visited.push_back(visit_line);
-    }
-    std::vector<int> pair = closest (img, visited, row, col);
-
-    float d = sqrt ((pair[0] - row) * (pair[0] - row) + (pair[1] - col) * (pair[1] - col));
-    if (!img[row][col])
-        d *= -1;
-
-    return d;
-}
-
-std::vector<int> text::closest (std::vector<std::vector<int>> img, std::vector<std::vector<bool>> &visited,  int row, int col) {
-    std::vector<int> pair (2);
-    pair[0] = row;
-    pair[1] = col;
-
-    visited[row][col] = true;
-    for (int i = row - 1; i <= row + 1; ++i) {
-        if (i < 0 ||  i >= (int) img.size()) continue;
-        for (int j = col - 1; j <= col + 1; ++j) {
-            if (j < 0 || j >= (int) img[0].size () || visited[i][j]) continue;
-            if (img[i][j] != img[row][col]) {
-                pair[0] = i, pair[1] = j;
-                return pair;
-            }
-            else
-                pair = closest (img, visited, i, j);
-        }
-    }
-
-    return pair;
-}
-
 void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
     text_to_render = QString (t);
 

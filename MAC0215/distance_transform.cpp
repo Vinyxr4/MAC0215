@@ -1,4 +1,5 @@
 #include "distance_transform.h"
+#include <cmath>
 
 // Constructor
 distance_transform::distance_transform (image new_image) {
@@ -12,6 +13,14 @@ void distance_transform::chess_board () {
     image second_transform = one_color_run (revert (original_image));
 
     transform = join_binary_transform (first_transform, second_transform);
+}
+
+void distance_transform::euclidean () {
+    transform = image (original_image);
+
+    for (int i = 0; i < (int) transform.size (); ++i)
+        for (int j = 0; j < (int) transform[0].size (); ++j)
+            transform[i][j] = euclidean_distance (i, j);
 }
 
 int distance_transform::get_transform_element (int row, int col) {
@@ -93,3 +102,42 @@ void distance_transform::closest_anti_raster (image &to_transform, int row, int 
         to_transform[row][col] = 1 + cl;
 }
 
+float distance_transform::euclidean_distance (int row, int col) {
+    std::vector<std::vector<bool>> visited;
+
+    for (int i = 0; i < (int) original_image.size(); ++i) {
+        std::vector<bool> visit_line;
+        for (int j = 0; j < (int) original_image[0].size(); ++j)
+            visit_line.push_back(false);
+        visited.push_back(visit_line);
+    }
+
+    coordinate pair = closest (visited, row, col);
+    float d = sqrt ((pair[0] - row) * (pair[0] - row) + (pair[1] - col) * (pair[1] - col));
+    if (!original_image[row][col])
+        d *= -1;
+
+    return d;
+}
+
+std::vector<int> distance_transform::closest (std::vector<std::vector<bool>> &visited,  int row, int col) {
+    coordinate pair (2);
+    pair[0] = row;
+    pair[1] = col;
+
+    visited[row][col] = true;
+    for (int i = row - 1; i <= row + 1; ++i) {
+        if (i < 0 ||  i >= (int) original_image.size()) continue;
+        for (int j = col - 1; j <= col + 1; ++j) {
+            if (j < 0 || j >= (int) original_image[0].size () || visited[i][j]) continue;
+            if (original_image[i][j] != original_image[row][col]) {
+                pair[0] = i, pair[1] = j;
+                return pair;
+            }
+            else
+                pair = closest (visited, i, j);
+        }
+    }
+
+    return pair;
+}
