@@ -120,7 +120,7 @@ float distance_transform::euclidean_distance (int row, int col) {
     return d;
 }
 
-std::vector<int> distance_transform::closest (std::vector<std::vector<bool>> &visited,  int row, int col) {
+coordinate distance_transform::closest (std::vector<std::vector<bool>> &visited,  int row, int col) {
     coordinate pair (2);
     pair[0] = row;
     pair[1] = col;
