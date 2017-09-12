@@ -82,6 +82,8 @@ private:
     GLuint *indices;
 
     float dist_to_pages = -100.0;
+    float zoom_factor = 0.65;
+    float w_size, h_size;
 
     QMetaObject::Connection m_connection;
 

@@ -32,7 +32,7 @@ private slots:
 private:
     QSlider *createSlider();
 
-    float albedo_factor = 10.0;
+    float albedo_factor = 100.0;
 
     MainWindow *mainWindow;
     int step_;

@@ -41,7 +41,7 @@ QGroupBox* Window::createParameterSliders() {
   albedoLabel = new QLabel(tr("Zoom:"));
   controllersLayout->addWidget(albedoLabel, currentRow, 0);
   controllersLayout->addWidget(albedoSlider, currentRow, 1);
-  albedoSlider->setValue(step_/2);
+  albedoSlider->setValue(50);
   glWidget->albedo = albedo_factor * 0.5;
   connect(albedoSlider, SIGNAL(valueChanged(int)), this, SLOT(valueAl(int)));
   currentRow++;
@@ -60,8 +60,8 @@ void Window::connectWidgetUpdate() {
 
 QSlider *Window::createSlider() {
   QSlider *slider = new QSlider(Qt::Horizontal);
-  slider->setRange(0, step_);
-  slider->setSingleStep(10);
+  slider->setRange(0, 100);
+  slider->setSingleStep(1);
   slider->setTickPosition(QSlider::TicksRight);
   return slider;
 }

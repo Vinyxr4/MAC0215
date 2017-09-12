@@ -51,13 +51,14 @@ private:
     QString font_path, atlas_path, text_to_render;
     FT_Library ft;
     FT_Face face;
-    int layer = 0, bake_type = 0;
+    int layer = 1;
+    QString bake_type = "trivial";
     uint x_size, y_size;
     std::vector<std::vector<glyph>> glyph_set;
     QString code_path = "../MAC0215/";
 
     // Bakes an atlas
-    void bake ();
+    void bake (int max_resolution, int max_size);
 
     // Defines the font to be used
     void define_font_type (QString font);

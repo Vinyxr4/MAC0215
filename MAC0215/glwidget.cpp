@@ -96,7 +96,7 @@ void GLWidget::disconnectUpdate() {
 }
 
 void GLWidget::initializeGL() {
-  //m_camera.translate(QVector3D(612.0f/2, 792.0f/2, 1.0f));
+  m_camera.translate(QVector3D(150, 250, 200));
 
   initializeOpenGLFunctions();
   connectUpdate();
@@ -161,15 +161,21 @@ void GLWidget::update() {
   if (Input::buttonPressed(Qt::LeftButton)) {
       m_transform.translate(Input::mouseDelta().x(), -Input::mouseDelta().y(), 0);
   }
+
+  float scale = 0.0083;
+  if (albedo < last_albedo) scale *= -1;
+  if (zoom_factor + scale >+ 1) {
+      changed = false;
+      return;
+  }
   if (changed) {
       changed = false;
-      float scale = 50;
-      if (albedo < last_albedo)
-          scale *= -1;
-      m_transform.translate(0, 0, scale);
+      //m_transform.translate(0, 0, scale);
+      zoom_factor += scale;
+      resizeGL(w_size, h_size);
       last_albedo = albedo;
   }
-  // Schedule a redraw
+
   QOpenGLWidget::update();
 }
 
@@ -194,12 +200,12 @@ void GLWidget::paintGL() {
 }
 
 void GLWidget::resizeGL(int w, int h) {
-  float zoom_factor = 0.95;
   float zoom = (1 - zoom_factor);
 
+  w_size = float(w);
+  h_size = float(h);
   m_projection.setToIdentity();
   m_projection.perspective(180.0f * zoom, w / float(h), 1.0f, 1000.0f);
-  //glViewport(-100, 0, 10, 10);
 }
 
 void GLWidget::mousePressEvent(QMouseEvent *event) {
