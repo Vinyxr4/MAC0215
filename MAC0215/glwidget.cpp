@@ -23,6 +23,7 @@ GLWidget::GLWidget(int step, QWidget *parent)
 
 
   Text = new text ("/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf", atlas);
+  //Text->bake_dist_transf ("city_block");
   Text->bake_atlas ();
   Text->gen_test_pdf ();
 }

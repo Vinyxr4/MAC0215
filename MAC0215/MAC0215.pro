@@ -2,7 +2,7 @@ QT += widgets
 
 CONFIG += c++11
 
-TARGET = pa2
+TARGET = mac0215
 CONFIG += console
 CONFIG -= app_bundle
 

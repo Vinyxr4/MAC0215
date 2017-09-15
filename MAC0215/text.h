@@ -27,7 +27,7 @@ public:
     void bake_mip_atlas (int max_resolution, int max_size, int layers);
 
     // Wrapper to bake an atlas using distance transform
-    void bake_dist_transf ();
+    void bake_dist_transf (QString metric);
 
     // Defines the text to be rendered from a pdf text
     void define_text_from_pdf (QString pdf_path);
@@ -65,6 +65,12 @@ private:
 
     // Defines the path used to save the baked atlas
     void define_atlas (QString atlas);
+
+    void prepare_texture (distance_transform transform, QImage &texture, int x_off, int y_off);
+
+    std::vector<std::vector<int>> construct_image (FT_Bitmap *bmp);
+
+    void do_transform (distance_transform &transform);
 };
 
 #endif // TEXT_H

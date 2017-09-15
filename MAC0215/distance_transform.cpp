@@ -1,15 +1,29 @@
 #include "distance_transform.h"
 #include <cmath>
+#include <QDebug>
 
 // Constructor
-distance_transform::distance_transform (image new_image) {
+distance_transform::distance_transform (image new_image, int new_height, int new_width) {
     original_image = image (new_image);
     transform = image (original_image);
+    height = new_height;
+    width = new_width;
 }
 
 /*** Public methods ***/
 
 void distance_transform::chess_board () {
+    metric = "chessboard";
+
+    image first_transform  = one_color_run (original_image);
+    image second_transform = one_color_run (revert (original_image));
+
+    transform = join_binary_transform (first_transform, second_transform);
+}
+
+void distance_transform::city_block() {
+    metric = "city_block";
+
     image first_transform  = one_color_run (original_image);
     image second_transform = one_color_run (revert (original_image));
 
@@ -24,8 +38,32 @@ void distance_transform::euclidean () {
             transform[i][j] = euclidean_distance (i, j);
 }
 
+void distance_transform::faster_euclidean () {
+    metric = "euclidean";
+
+    image G = meijester_phase_1 (revert (original_image));
+    image first_transform = meijester_phase_2 (G);
+
+    G =meijester_phase_1 (original_image);
+    image second_transform = meijester_phase_2 (G);
+
+    transform =  join_binary_transform (first_transform, second_transform);
+}
+
 int distance_transform::get_transform_element (int row, int col) {
     return transform[row][col];
+}
+
+std::string distance_transform::get_metric () {
+    return metric;
+}
+
+int distance_transform::get_height () {
+    return height;
+}
+
+int distance_transform::get_width () {
+    return width;
 }
 
 /*** Private methods ***/
@@ -75,6 +113,7 @@ void distance_transform::closest_raster (image &to_transform, int row, int col) 
     for (int i = row - 1; i <= row; ++i) {
         if (i < 0 || i == (int) to_transform.size()) continue;
         for (int j = col - 1; j <= col + 1; ++j) {
+            if (metric == "city_block" && i == row - 1 && j != col) continue;
             if (j < 0 || j == (int) to_transform[0].size()) continue;
             if (i == row && j == col) break;
             if (to_transform[i][j] < cl)
@@ -92,6 +131,7 @@ void distance_transform::closest_anti_raster (image &to_transform, int row, int 
     for (int i = row + 1; i >= row; --i) {
         if (i < 0 || i == (int) to_transform.size()) continue;
         for (int j = col + 1; j >= col - 1; --j) {
+            if (metric == "city_block" && i == row + 1 && j != col) continue;
             if (j < 0 || j == (int) to_transform[0].size()) continue;
             if (i == row && j == col) break;
             if (to_transform[i][j] < cl)
@@ -141,4 +181,59 @@ coordinate distance_transform::closest (std::vector<std::vector<bool>> &visited,
     }
 
     return pair;
+}
+
+image distance_transform::meijester_phase_1 (image to_transform) {
+    int true_inf = height + width;
+    image G;
+
+    for (int i = 0; i < (int) to_transform.size (); ++i) {
+        std::vector<int> g;
+
+        if (to_transform[i][0]) g.push_back (0);
+        else g.push_back (true_inf);
+
+        for (int j = 1; j < (int) to_transform[0].size (); ++j) {
+            if (to_transform[i][j]) g.push_back (0);
+            else g.push_back (1 + g[j - 1]);
+        }
+
+        for (int j = to_transform[i].size () - 2; j >= 0; --j)
+            if (g[j + 1] < g[j]) g[j] = 1 + g[j + 1];
+        G.push_back (g);
+    }
+
+    return G;
+}
+
+image distance_transform::meijester_phase_2 (image G) {
+    image final_transform;
+
+    for (int i = 0; i < (int) G.size (); ++i) {
+        std::vector<int> line;
+        for (int j = 0; j < (int) G[i].size (); ++j) {
+            int f = i * i + G[0][j] * G[0][j];
+            for (int k = 1; k < (int) G.size (); ++k) {
+                int new_f = (i - k) * (i - k) + G[k][j] * G[k][j];
+                if (new_f < f) f = new_f;
+            }
+            line.push_back (f);
+        }
+        final_transform.push_back(line);
+    }
+
+    return final_transform;
+}
+
+image distance_transform::transpose (image to_transpose) {
+    image transposed;
+
+    for (int i = 0; i < (int) to_transpose.size (); ++i) {
+        std::vector<int> line;
+        for (int j = 0; j < (int) to_transpose[0].size (); ++j)
+            line.push_back (to_transpose[j][i]);
+        transposed.push_back (line);
+    }
+
+    return transposed;
 }

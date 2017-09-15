@@ -15,8 +15,8 @@ void text::bake_atlas() {
     bake (500, 1000);
 }
 
-void text::bake_dist_transf () {
-    bake_type = "distance transform";
+void text::bake_dist_transf (QString metric) {
+    bake_type = "distance transform " + metric;
     bake (500, 1000);
 }
 
@@ -134,88 +134,104 @@ void text::bake (int max_resolution, int max_size) {
     int GLYPH_HEIGHT = max_size;
     int DPI = max_resolution;
 
-    FT_Select_Charmap(face , ft_encoding_unicode);
-    FT_Set_Char_Size(face, 0, GLYPH_HEIGHT, DPI, DPI);
+    std::locale loc("en_US.UTF-8");
+    if (bake_type.indexOf("distance transform") > -1)
+        FT_Set_Char_Size (face, 0, GLYPH_HEIGHT, DPI/2, DPI/2);
+    else
+        FT_Set_Char_Size (face, 0, GLYPH_HEIGHT, DPI, DPI);
     int num_glyphs = face->num_glyphs;
 
     FT_Size_Metrics_ metric = face->size->metrics;
-
     uint texture_height = (metric.height >> 6) * (sqrt(num_glyphs));
     uint texture_width = texture_height;
     x_size = texture_width;
     y_size = texture_height;
+
     if (layer > 1)
         x_size *= 1.5;
 
-    QImage texture(texture_width, texture_height, QImage::Format_RGB32);
-    QRgb color;
-    int x = 0;
-    int y = 0;
-    int last_x = 0;
-    int last_y = 0;
+    int x, y;
+    int last_x = 0, last_y = 0;
 
-    std::locale loc("en_US.UTF-8");
+    QImage texture (texture_width, texture_height, QImage::Format_RGB32);
     for (int l = 0; l < layer; ++l) {
         std::vector<glyph> set;
+        x = last_x, y = last_y;
         for (int i = 0; i < num_glyphs; ++i) {
+            FT_Load_Char (face, i, FT_LOAD_RENDER | FT_LOAD_TARGET_LIGHT);
+            FT_Bitmap *bmp = &face->glyph->bitmap;
             if (std::isprint((wchar_t) i, loc)) {
                 std::vector<std::vector<int>> img;
-
-                FT_Load_Char (face, i, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT);
-                FT_Bitmap *bmp = &face->glyph->bitmap;
 
                 if (x + bmp->width >= texture_width)
                     x = 0, y += (1 + (face->size->metrics.height >> 6));
 
-                for (uint row = 0; row < bmp->rows; ++row) {
-                    std::vector<int> line;
-                    for (uint col = 0; col < bmp->width; ++col) {
-                        if (bmp->buffer[row * bmp->pitch + col])
-                            line.push_back(1);
-                        else line.push_back(0);
-                    }
-                    img.push_back(line);
-                }
+                img = construct_image (bmp);
+                distance_transform transform (img, bmp->rows, bmp->width);
+                do_transform (transform);
+                prepare_texture (transform, texture, x, y);
+                set.push_back (glyph (x, y, bmp->rows, bmp->width, i));
 
-                distance_transform transform (img);
-                if (bake_type == "distance transform")
-                    transform.chess_board ();
-
-                for (uint row = 0; row < img.size(); ++row) {
-                    for (uint col = 0; col < img[0].size(); ++col) {
-                        float max = img[0].size();
-                        if (img[0].size () > max) max = img[0].size ();
-                        int element = transform.get_transform_element (row, col);
-                        int color_cmp = (int) (255 * (0.5 * element/max + 0.5));
-                        color = qRgb (color_cmp,color_cmp,color_cmp);
-                        texture.setPixel(col + x, row + y, color);
-                    }
-                }
-
-                glyph *g = new glyph (x, y, bmp->rows, bmp->width, i);
-                set.push_back (*g);
                 x +=  1 + bmp->width;
             }
-            else {
-                glyph *g = new glyph (0, 0, 0, 0, i);
-                set.push_back (*g);
-            }
+            else
+                set.push_back (glyph (0, 0, 0, 0, i));
         }
         glyph_set.push_back(set);
         if ((l+1) % 2)
             last_x += texture_width;
         else
             last_y += texture_height;
-        x = last_x;
-        y = last_y;
         texture_width = texture_width >> 1;
         texture_height = texture_height >> 1;
         DPI = DPI >> 1;
-        FT_Set_Char_Size(face, 0, GLYPH_HEIGHT, DPI, DPI);
+        FT_Set_Char_Size (face, 0, GLYPH_HEIGHT, DPI, DPI);
     }
 
     texture.save(atlas_path, Q_NULLPTR, 50);
     FT_Done_FreeType(ft);
+}
+
+void text::do_transform (distance_transform &transform) {
+    if (bake_type == "distance transform city_block")
+        transform.city_block ();
+    else if (bake_type == "distance transform chessboard")
+        transform.chess_board ();
+    else if (bake_type == "distance transform euclidean")
+        transform.faster_euclidean ();
+}
+
+std::vector<std::vector<int>> text::construct_image (FT_Bitmap *bmp) {
+    std::vector<std::vector<int>> img;
+    for (uint row = 0; row < bmp->rows; ++row) {
+        std::vector<int> line;
+        for (uint col = 0; col < bmp->width; ++col) {
+            if (bmp->buffer[row * bmp->pitch + col])
+                line.push_back(1);
+            else line.push_back(0);
+        }
+        img.push_back(line);
+    }
+
+    return img;
+}
+
+void text::prepare_texture (distance_transform transform, QImage &texture, int x_off, int y_off) {
+    QRgb color;
+
+    float max = transform.get_height ();
+    if (transform.get_metric() == "euclidean")
+        max += transform.get_width ();
+    else if (transform.get_width () > max) max = transform.get_width ();
+
+    for (int row = 0; row < transform.get_height (); ++row) {
+        for (int col = 0; col < transform.get_width (); ++col) {
+            float element = (1.0 * transform.get_transform_element (row, col)) / max;
+            int color_cmp = 255 * (0.5 * element + 0.5);
+            color = qRgb (color_cmp, color_cmp, color_cmp);
+            texture.setPixel (col + x_off, row + y_off, color);
+        }
+    }
 }
 
 void text::define_font_type (QString font) {
