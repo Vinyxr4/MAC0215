@@ -1,6 +1,41 @@
 # MAC0215
 Repositório para códigos do projeto de pesquisa
 
+## Update 17/09
+
+- O código foi refatorado para que as funções relacionadas com transformada de distância possam ficar organizadas em uma classe. Assim, a classe distance_transform foi criada.
+  
+  Funções públicas:
+  
+  * chess_board: Calcula a transformada de distância da imagem usando distância chessboard. Essa implementação e utiliza algoritmo 8sed;
+  * city_block: Calcula a transformada de distância da imagem usando distância city block. Essa implementação e utiliza algoritmo 4sed;
+  * euclidean: Calcula a transformada de distância da imagem usando distância euclidiana. Essa implementação é trivial, calculando para cada ponto do glifo, a distância do ponto complementar mais próximo a esse ponto percorrendo todo o glifo. Com isso, o algoritmo fica altamente ineficiente;
+  * faster_euclidean: Calcula a transformada de distância exata da imagem usando distância euclidiana. Essa implementação utiliza o algoritmo apresentado em \cite{meijster2002general}, calculando em duas fases a transformada. A primeira fase segue o algoritmo apresentado por Meijester, porém a segunda fase, que envolve a minimização da função obtida na primeira fase é feita de modo trivial, obtendo um algoritmo com uma ordem de grandeza superior à do artigo, porém mais rápido que a implementação trivial;
+  * get_transform_element: Getter para uma posição da transformada;
+  * get_metric: Getter da métrica utilizada na transformada;
+  * get_height: Getter da altura da transformada;
+  * get_width: Getter da largura da transformada.
+  
+  Funções privadas:
+  
+  * closest_raster: Realiza a varredura em raster para o algorimos 4sed e 8sed;
+  * closest_anti_raster: Realiza a varredura em anti-raster para o algorimos 4sed e 8sed;
+  * closest: Procura o ponto complementar mais próximo de um dado ponto;
+  * euclidean_distance: Calcula a transformada de distância de um ponto do glifo de forma trivial;
+  * one_color_run:} Calcula a transformada 4sed ou 8sed para uma cor da imagem;
+  * revert: Inverte a cor do glifo;
+  * join_binary_transform: Recebe duas transformadas sem sinal e gera uma transformada com sinal;
+  * meijester_phase_1: Realiza a primeira fase do calculo da transformada de distância exata com métrica euclidiana;
+  * meijester_phase_2: Realiza a segunda fase do calculo da transformada de distância exata com métrica euclidiana;
+  * transpose: Realiza transpõe de uma imagem.
+
+- A função update, em glwidget, foi alterada. Agora, ao invés de mover a câmera para gerar efeito de zoom, o ângulo vertical da matriz de perspectiva é alterado a partir de um coeficiente de escala;
+
+- As funções utilizadas para a geração de atlas foram refatoradas e a função privada \textbf{bake} foi criada para ser chamada por bake_atlas, bake_dist_transf e bake_mip_atlas pois essas tinham um corpo muito parecido;
+  
+- As funções construct_image e prepare_texture foram criadas para modularizar a função bake, pois a função estava muito comprida.
+
+
 ## Update 10/09
 
 - Classe text
