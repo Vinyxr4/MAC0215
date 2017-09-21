@@ -32,6 +32,9 @@ public:
     void connectUpdate();
     void disconnectUpdate();
     void LoadText (int layers);
+    void set_render_mode (int layers);
+    void set_bake_type (QString new_bake_type);
+    void set_transform_type (QString new_transform_type);
 
     float albedo, last_albedo;
     bool changed = false;

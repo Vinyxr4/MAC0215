@@ -110,12 +110,10 @@ void text::gen_test () {
     vec.push_back(QVector3D (-0.3, 0.5, 0));
 
     define_text(test_string, vec);
-
-    //qDebug () << "Coordenadas:\n" << font_texture;
 }
 
 void text::gen_test_pdf () {
-    QString example_path = code_path + "pdf/lista_1.pdf";
+    QString example_path = pdf_test_path + "lista_1.pdf";
     define_text_from_pdf (example_path);
 }
 

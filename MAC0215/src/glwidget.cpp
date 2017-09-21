@@ -15,6 +15,10 @@ QOpenGLTexture *texture;
 
 text *Text;
 QString atlas = "teste.png";
+bool change_render = false;
+QString transform_type = "";
+QString trivial_type = "";
+QString bake_type = "trivial";
 
 GLWidget::GLWidget(int step, QWidget *parent)
     : QOpenGLWidget(parent),
@@ -26,6 +30,44 @@ GLWidget::GLWidget(int step, QWidget *parent)
   //Text->bake_dist_transf ("city_block");
   Text->bake_atlas ();
   Text->gen_test_pdf ();
+}
+
+void GLWidget::set_bake_type (QString new_bake_type) {
+    bake_type = new_bake_type;
+    change_render = true;
+}
+
+void GLWidget::set_transform_type (QString new_transform_type) {
+    transform_type = new_transform_type;
+    change_render = true;
+}
+
+void GLWidget::set_render_mode (int layers) {
+    if (change_render) {
+        if (bake_type == "trivial") {
+            if (trivial_type == "texture")
+                Text->bake_atlas ();
+            else if (trivial_type == "texture mip")
+                Text->bake_mip_atlas (500, 1000, layers);
+        }
+        else if (bake_type == "texture distance transform")
+            Text->bake_dist_transf (transform_type);
+        qDebug () << "oier";
+        if (texture != NULL) {
+            delete texture;
+            texture = new QOpenGLTexture (QImage (atlas).mirrored());
+
+            //texture->setMipLevels(layers);
+
+            texture->setMinificationFilter(QOpenGLTexture::Linear);
+            texture->setMagnificationFilter(QOpenGLTexture::Linear);
+            texture->setWrapMode(QOpenGLTexture::MirroredRepeat);
+
+            texture->generateMipMaps();
+            qDebug () << "oier";
+        }
+    }
+    change_render = false;
 }
 
 void GLWidget::LoadText (int layers) {

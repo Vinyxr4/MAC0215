@@ -55,7 +55,8 @@ private:
     QString bake_type = "trivial";
     uint x_size, y_size;
     std::vector<std::vector<glyph>> glyph_set;
-    QString code_path = "../MAC0215/";
+    QString code_path = "../MAC0215/src/";
+    QString pdf_test_path = "../MAC0215/pdf/";
 
     // Bakes an atlas
     void bake (int max_resolution, int max_size);
