@@ -28,8 +28,11 @@ public:
 
 private slots:
     void valueAl(int);
-    void bakeSlot (bool nv);
-    void distanceTransformSlot (bool nv);
+    void trivialTexSlot ();
+    void trivialMipSlot ();
+    void distanceCityBlockSlot ();
+    void distanceEuclideanSlot ();
+    void distanceChessBoardSlot ();
 
 private:
     QSlider *createSlider();
@@ -42,7 +45,8 @@ private:
     int shininess_;
     GLWidget *glWidget;
 
-    QRadioButton *trivial, *distance_transform;
+    QPushButton *distance_chess_board, *distance_city_block, *distance_euclidean;
+    QPushButton *trivial_texture, *trivial_mip;
 
     // Sliders
     QSlider *albedoSlider;

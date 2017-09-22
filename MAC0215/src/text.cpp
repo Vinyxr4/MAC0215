@@ -2,22 +2,26 @@
 #include <iostream>
 #include <locale>
 
+int dpi_test = 500;
+int resol_test = 1000;
+
 // Constructor
 text::text (QString font, QString atlas) {
     define_font_type (QString (font));
-    define_atlas(atlas);
+    define_atlas (atlas);
+    set_layer (1);
 }
 
 /*** Public metthods ***/
 
 void text::bake_atlas() {
     bake_type = "trivial";
-    bake (500, 1000);
+    bake (dpi_test, resol_test);
 }
 
 void text::bake_dist_transf (QString metric) {
     bake_type = "distance transform " + metric;
-    bake (500, 1000);
+    bake (dpi_test, resol_test);
 }
 
 void text::bake_mip_atlas (int max_resolution, int max_size, int layers) {
@@ -30,6 +34,9 @@ void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
     text_to_render = QString (t);
 
     set_layer (0);
+
+    font_vertices.clear();
+    font_texture.clear();
 
     int i = 0;
     for (QChar *c = text_to_render.begin(); c != text_to_render.end(); ++c, i += 4) {
@@ -113,7 +120,7 @@ void text::gen_test () {
 }
 
 void text::gen_test_pdf () {
-    QString example_path = pdf_test_path + "lista_1.pdf";
+    QString example_path = pdf_test_path + "Lorem-Ipsum.pdf";
     define_text_from_pdf (example_path);
 }
 
@@ -151,8 +158,9 @@ void text::bake (int max_resolution, int max_size) {
     int x, y;
     int last_x = 0, last_y = 0;
 
+    glyph_set.clear();
     QImage texture (texture_width, texture_height, QImage::Format_RGB32);
-    for (int l = 0; l < layer; ++l) {
+    for (int l = 0; l < 1; ++l) {
         std::vector<glyph> set;
         x = last_x, y = last_y;
         for (int i = 0; i < num_glyphs; ++i) {
@@ -167,6 +175,7 @@ void text::bake (int max_resolution, int max_size) {
                 img = construct_image (bmp);
                 distance_transform transform (img, bmp->rows, bmp->width);
                 do_transform (transform);
+
                 prepare_texture (transform, texture, x, y);
                 set.push_back (glyph (x, y, bmp->rows, bmp->width, i));
 

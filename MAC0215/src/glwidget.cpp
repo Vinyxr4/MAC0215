@@ -15,22 +15,13 @@ QOpenGLTexture *texture = NULL;
 
 text *Text;
 QString atlas = "teste.png";
-QString transform_type = "";
-QString trivial_type = "";
-QString bake_type = "trivial";
 
 GLWidget::GLWidget(int step, QWidget *parent)
     : QOpenGLWidget(parent),
       m_program(0) {
   step_ = step;
 
-
   Text = new text ("/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf", atlas);
-  //Text->bake_dist_transf ("city_block");
-  //Text->bake_atlas ();
-  //Text->gen_test_pdf ();
-  set_bake_type ("texture distance transform");
-  set_transform_type ("city_block");
 }
 
 void GLWidget::set_bake_type (QString new_bake_type) {
@@ -40,6 +31,10 @@ void GLWidget::set_bake_type (QString new_bake_type) {
 
 void GLWidget::set_transform_type (QString new_transform_type) {
     transform_type = new_transform_type;
+    change_render = true;
+}
+void GLWidget::set_trivial_type (QString new_trivial_type) {
+    trivial_type = new_trivial_type;
     change_render = true;
 }
 
@@ -58,26 +53,26 @@ void GLWidget::loadTexture (QString file) {
 }
 
 void GLWidget::set_render_mode (int layers) {
+    m_program->bind();
     disconnectUpdate ();
     if (change_render) {
         if (bake_type == "trivial") {
             if (trivial_type == "texture")
                 Text->bake_atlas ();
             else if (trivial_type == "texture mip")
-                Text->bake_mip_atlas (500, 1000, layers);
+                Text->bake_atlas ();
         }
         else if (bake_type == "texture distance transform")
             Text->bake_dist_transf (transform_type);
-        if (true) {
-
-            loadTexture (atlas);
-            Text->gen_test_pdf ();
-            LoadText (layers);
-
-        }
+        Text->gen_test_pdf ();
+        loadTexture (atlas);
+        LoadText (layers);
+        if (trivial_type == "texture mip" && bake_type == "trivial")
+            texture->generateMipMaps();
     }
     change_render = false;
     connectUpdate ();
+    m_program->release();
 }
 
 void GLWidget::LoadText (int layers) {
@@ -92,6 +87,8 @@ void GLWidget::LoadText (int layers) {
     m_object.bind();
     m_vertex.bind();
 
+    if (sg_vertexes_ != NULL)
+        free (sg_vertexes_);
     sg_vertexes_ = font_vertex;
     vertexCount_ = Text->font_vertices.size ();
     m_vertex.allocate(sg_vertexes_, vertexCount_ * sizeof (QVector3D));
@@ -102,6 +99,8 @@ void GLWidget::LoadText (int layers) {
     m_object.bind();
     m_tex.bind();
 
+    if (sg_texture_ != NULL)
+        free (sg_texture_);
     sg_texture_ = font_tex;
     m_tex.allocate(sg_texture_, vertexCount_ * sizeof (QVector2D));
 
@@ -196,9 +195,6 @@ void GLWidget::initializeGL() {
     m_object.release();
 
     last_albedo = albedo;
-
-    LoadText(5);
-    glViewport(0, 0, 10, 10);
   }
 }
 

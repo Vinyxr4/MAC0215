@@ -35,6 +35,7 @@ public:
     void set_render_mode (int layers);
     void set_bake_type (QString new_bake_type);
     void set_transform_type (QString new_transform_type);
+    void set_trivial_type (QString new_trivial_type);
 
     float albedo, last_albedo;
     bool changed = false;
@@ -62,6 +63,10 @@ private:
     void initTex (QString url);
     void loadTexture (QString file);
 
+    QString transform_type = "";
+    QString trivial_type = "";
+    QString bake_type = "";
+
     QOpenGLBuffer m_vertex;
     QOpenGLBuffer m_normal;
     QOpenGLBuffer m_tex;
@@ -82,9 +87,9 @@ private:
     int vertexCount_;
     int m_texAttr;
     GLuint* indices_;
-    QVector3D* sg_vertexes_;
+    QVector3D* sg_vertexes_ = NULL;
     QVector3D *vertices;
-    QVector2D *Texture, *sg_texture_;
+    QVector2D *Texture, *sg_texture_ = NULL;
     GLuint *indices;
 
     float dist_to_pages = -100.0;

@@ -70,18 +70,35 @@ QSlider *Window::createSlider() {
 
 QGroupBox* Window::createBakeTypeBoxes() {
   QGroupBox *bakeGroup = new QGroupBox(tr("Bake type:"));
+  QGroupBox *trivialGroup = new QGroupBox(tr("Trivial type:"));
+  QGroupBox *distanceGroup = new QGroupBox(tr("Distance Transform:"));
   QVBoxLayout *bakeLayout = new QVBoxLayout();
+  QVBoxLayout *trivialLayout = new QVBoxLayout();
+  QVBoxLayout *distanceLayout = new QVBoxLayout();
 
-  trivial = new QRadioButton ("Traditional", this);
-  distance_transform = new QRadioButton ("Distance Transform", this);
+  trivial_texture = new QPushButton ("Trivial Texture", this);
+  trivial_mip = new QPushButton ("MipMap Texture", this);
+  distance_city_block = new QPushButton ("City Block", this);
+  distance_chess_board = new QPushButton ("Chessboard", this);
+  distance_euclidean = new QPushButton ("Euclidean", this);
 
-  bakeLayout->addWidget(trivial);
-  bakeLayout->addWidget(distance_transform);
+  trivialLayout->addWidget(trivial_texture);
+  trivialLayout->addWidget(trivial_mip);
+  connect(trivial_texture, SIGNAL(clicked()), this, SLOT(trivialTexSlot ()));
+  connect(trivial_mip, SIGNAL(clicked()), this, SLOT(trivialMipSlot ()));
+  trivialGroup->setLayout(trivialLayout);
+  bakeLayout->addWidget(trivialGroup);
 
-  connect(trivial, SIGNAL(clicked(bool)), this, SLOT(bakeSlot (bool)));
-  connect(distance_transform, SIGNAL(clicked(bool)), this, SLOT(distanceTransformSlot(bool)));
+  distanceLayout->addWidget(distance_city_block);
+  distanceLayout->addWidget(distance_chess_board);
+  distanceLayout->addWidget(distance_euclidean);
+  connect(distance_city_block, SIGNAL(clicked()), this, SLOT(distanceCityBlockSlot()));
+  connect(distance_chess_board, SIGNAL(clicked()), this, SLOT(distanceChessBoardSlot()));
+  connect(distance_euclidean, SIGNAL(clicked()), this, SLOT(distanceEuclideanSlot()));
+  distanceGroup->setLayout(distanceLayout);
+  bakeLayout->addWidget(distanceGroup);
 
-  distance_transform->click();
+  trivial_texture->click();
 
   bakeGroup->setLayout(bakeLayout);
   return bakeGroup;
@@ -93,17 +110,27 @@ void Window::valueAl(int nv) {
 }
 
 // Bake type button controller
-void Window::bakeSlot (bool nv) {
-    if (nv == true) {
-        qDebug () << "ok";
-       glWidget->set_bake_type ("trivial");
-       glWidget->set_transform_type ("");
-    }
+void Window::trivialTexSlot () {
+   glWidget->set_bake_type ("trivial");
+   glWidget->set_trivial_type ("texture");
 }
 
-void Window::distanceTransformSlot (bool nv) {
-    if (nv == true) {
-       glWidget->set_bake_type ("texture distance transform");
-       glWidget->set_transform_type ("city_block");
-    }
+void Window::trivialMipSlot () {
+   glWidget->set_bake_type ("trivial");
+   glWidget->set_trivial_type ("texture mip");
+}
+
+void Window::distanceCityBlockSlot () {
+   glWidget->set_bake_type ("texture distance transform");
+   glWidget->set_transform_type ("city_block");
+}
+
+void Window::distanceChessBoardSlot () {
+   glWidget->set_bake_type ("texture distance transform");
+   glWidget->set_transform_type ("chess_board");
+}
+
+void Window::distanceEuclideanSlot () {
+   glWidget->set_bake_type ("texture distance transform");
+   glWidget->set_transform_type ("euclidean");
 }
