@@ -7,6 +7,7 @@
 #include <QPushButton>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QDirIterator>
 
 #include "window.h"
 #include "glwidget.h"
@@ -30,6 +31,14 @@ Window::Window(MainWindow *mw, int step, int shininess)
   QWidget *centralWidget = new QWidget;
   centralWidget->setLayout(container);
   mainLayout->addWidget(centralWidget);
+
+  QDirIterator fonts ("/usr/share/fonts/truetype", QDirIterator::Subdirectories);
+
+  while (fonts.hasNext()) {
+      QFile f(fonts.next());
+      if (f.fileName().endsWith(".ttf"))
+        qDebug() << f.fileName();
+  }
 
   setLayout(mainLayout);
 }
