@@ -38,6 +38,7 @@ public:
 
     float albedo, last_albedo;
     bool changed = false;
+    bool change_render = false;
 
     QOpenGLShaderProgram *m_program;
     QOpenGLShader *shader;
@@ -58,6 +59,8 @@ protected slots:
 
 private:
     void printContextInformation();
+    void initTex (QString url);
+    void loadTexture (QString file);
 
     QOpenGLBuffer m_vertex;
     QOpenGLBuffer m_normal;

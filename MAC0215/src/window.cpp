@@ -20,9 +20,11 @@ Window::Window(MainWindow *mw, int step, int shininess)
 
   QVBoxLayout *mainLayout = new QVBoxLayout;
   QGridLayout *container = new QGridLayout;
+  QGroupBox *bakerGroup = createBakeTypeBoxes ();
 
   container->addWidget(glWidget, 0, 0, 4, 1);
-  container->addWidget(controllersGroup, 1, 1, 1, 2);
+  container->addWidget(bakerGroup, 0,1);
+  container->addWidget(controllersGroup, 4,1,1,2);
   container->setColumnStretch(0, 10);
 
   QWidget *centralWidget = new QWidget;
@@ -66,7 +68,42 @@ QSlider *Window::createSlider() {
   return slider;
 }
 
+QGroupBox* Window::createBakeTypeBoxes() {
+  QGroupBox *bakeGroup = new QGroupBox(tr("Bake type:"));
+  QVBoxLayout *bakeLayout = new QVBoxLayout();
+
+  trivial = new QRadioButton ("Traditional", this);
+  distance_transform = new QRadioButton ("Distance Transform", this);
+
+  bakeLayout->addWidget(trivial);
+  bakeLayout->addWidget(distance_transform);
+
+  connect(trivial, SIGNAL(clicked(bool)), this, SLOT(bakeSlot (bool)));
+  connect(distance_transform, SIGNAL(clicked(bool)), this, SLOT(distanceTransformSlot(bool)));
+
+  distance_transform->click();
+
+  bakeGroup->setLayout(bakeLayout);
+  return bakeGroup;
+}
+
 void Window::valueAl(int nv) {
     glWidget->albedo = albedo_factor * float(nv)/step_;
     glWidget->changed = true;
+}
+
+// Bake type button controller
+void Window::bakeSlot (bool nv) {
+    if (nv == true) {
+        qDebug () << "ok";
+       glWidget->set_bake_type ("trivial");
+       glWidget->set_transform_type ("");
+    }
+}
+
+void Window::distanceTransformSlot (bool nv) {
+    if (nv == true) {
+       glWidget->set_bake_type ("texture distance transform");
+       glWidget->set_transform_type ("city_block");
+    }
 }

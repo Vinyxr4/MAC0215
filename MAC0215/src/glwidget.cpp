@@ -11,11 +11,10 @@
 #include "input.h"
 #include "text.h"
 
-QOpenGLTexture *texture;
+QOpenGLTexture *texture = NULL;
 
 text *Text;
 QString atlas = "teste.png";
-bool change_render = false;
 QString transform_type = "";
 QString trivial_type = "";
 QString bake_type = "trivial";
@@ -28,8 +27,10 @@ GLWidget::GLWidget(int step, QWidget *parent)
 
   Text = new text ("/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf", atlas);
   //Text->bake_dist_transf ("city_block");
-  Text->bake_atlas ();
-  Text->gen_test_pdf ();
+  //Text->bake_atlas ();
+  //Text->gen_test_pdf ();
+  set_bake_type ("texture distance transform");
+  set_transform_type ("city_block");
 }
 
 void GLWidget::set_bake_type (QString new_bake_type) {
@@ -42,7 +43,22 @@ void GLWidget::set_transform_type (QString new_transform_type) {
     change_render = true;
 }
 
+void GLWidget::initTex (QString url) {
+    texture = new QOpenGLTexture (QImage (url).mirrored());
+
+    texture->setMinificationFilter(QOpenGLTexture::Linear);
+    texture->setMagnificationFilter(QOpenGLTexture::Linear);
+    texture->setWrapMode(QOpenGLTexture::MirroredRepeat);
+}
+
+void GLWidget::loadTexture (QString file) {
+    delete texture;
+    QString url = (file);
+    initTex (url);
+}
+
 void GLWidget::set_render_mode (int layers) {
+    disconnectUpdate ();
     if (change_render) {
         if (bake_type == "trivial") {
             if (trivial_type == "texture")
@@ -52,22 +68,16 @@ void GLWidget::set_render_mode (int layers) {
         }
         else if (bake_type == "texture distance transform")
             Text->bake_dist_transf (transform_type);
-        qDebug () << "oier";
-        if (texture != NULL) {
-            delete texture;
-            texture = new QOpenGLTexture (QImage (atlas).mirrored());
+        if (true) {
 
-            //texture->setMipLevels(layers);
+            loadTexture (atlas);
+            Text->gen_test_pdf ();
+            LoadText (layers);
 
-            texture->setMinificationFilter(QOpenGLTexture::Linear);
-            texture->setMagnificationFilter(QOpenGLTexture::Linear);
-            texture->setWrapMode(QOpenGLTexture::MirroredRepeat);
-
-            texture->generateMipMaps();
-            qDebug () << "oier";
         }
     }
     change_render = false;
+    connectUpdate ();
 }
 
 void GLWidget::LoadText (int layers) {
@@ -78,17 +88,6 @@ void GLWidget::LoadText (int layers) {
         font_vertex[i] = Text->font_vertices[i];
         font_tex[i] = Text->font_texture[i];
     }
-
-    delete texture;
-    texture = new QOpenGLTexture (QImage (atlas).mirrored());
-
-    //texture->setMipLevels(layers);
-
-    texture->setMinificationFilter(QOpenGLTexture::Linear);
-    texture->setMagnificationFilter(QOpenGLTexture::Linear);
-    texture->setWrapMode(QOpenGLTexture::MirroredRepeat);
-
-    texture->generateMipMaps();
 
     m_object.bind();
     m_vertex.bind();
@@ -148,6 +147,10 @@ void GLWidget::initializeGL() {
   glEnable(GL_DEPTH_TEST);
   glDepthRange(0,1);
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+  initTex (atlas);
+  //texture->setMipLevels(layers);
+  texture->generateMipMaps();
 
   // Application-specific initialization
   {
@@ -224,6 +227,8 @@ void GLWidget::update() {
 
 void GLWidget::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  set_render_mode (5);
 
   m_program->bind();
 

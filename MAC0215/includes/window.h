@@ -28,9 +28,12 @@ public:
 
 private slots:
     void valueAl(int);
+    void bakeSlot (bool nv);
+    void distanceTransformSlot (bool nv);
 
 private:
     QSlider *createSlider();
+    QGroupBox* createBakeTypeBoxes();
 
     float albedo_factor = 100.0;
 
@@ -38,6 +41,8 @@ private:
     int step_;
     int shininess_;
     GLWidget *glWidget;
+
+    QRadioButton *trivial, *distance_transform;
 
     // Sliders
     QSlider *albedoSlider;
