@@ -10,7 +10,6 @@
 #include <QDirIterator>
 
 #include "window.h"
-#include "glwidget.h"
 #include "mainwindow.h"
 
 Window::Window(MainWindow *mw, int step, int shininess)
@@ -31,14 +30,6 @@ Window::Window(MainWindow *mw, int step, int shininess)
   QWidget *centralWidget = new QWidget;
   centralWidget->setLayout(container);
   mainLayout->addWidget(centralWidget);
-
-  QDirIterator fonts ("/usr/share/fonts/truetype", QDirIterator::Subdirectories);
-
-  while (fonts.hasNext()) {
-      QFile f(fonts.next());
-      if (f.fileName().endsWith(".ttf"))
-        qDebug() << f.fileName();
-  }
 
   setLayout(mainLayout);
 }
@@ -69,6 +60,11 @@ void Window::connectWidgetUpdate() {
   glWidget->connectUpdate();
 }
 
+void Window::change_font (QString new_font_path) {
+    glWidget->Text->define_font_type(new_font_path);
+    glWidget->change_render = true;
+}
+
 QSlider *Window::createSlider() {
   QSlider *slider = new QSlider(Qt::Horizontal);
   slider->setRange(0, 100);
@@ -81,15 +77,18 @@ QGroupBox* Window::createBakeTypeBoxes() {
   QGroupBox *bakeGroup = new QGroupBox(tr("Bake type:"));
   QGroupBox *trivialGroup = new QGroupBox(tr("Trivial type:"));
   QGroupBox *distanceGroup = new QGroupBox(tr("Distance Transform:"));
+  QGroupBox *curveGroup = new QGroupBox(tr("Curve:"));
   QVBoxLayout *bakeLayout = new QVBoxLayout();
   QVBoxLayout *trivialLayout = new QVBoxLayout();
   QVBoxLayout *distanceLayout = new QVBoxLayout();
+  QVBoxLayout *curveLayout = new QVBoxLayout();
 
   trivial_texture = new QPushButton ("Trivial Texture", this);
   trivial_mip = new QPushButton ("MipMap Texture", this);
   distance_city_block = new QPushButton ("City Block", this);
   distance_chess_board = new QPushButton ("Chessboard", this);
   distance_euclidean = new QPushButton ("Euclidean", this);
+  curve = new QPushButton ("Curve", this);
 
   trivialLayout->addWidget(trivial_texture);
   trivialLayout->addWidget(trivial_mip);
@@ -106,6 +105,11 @@ QGroupBox* Window::createBakeTypeBoxes() {
   connect(distance_euclidean, SIGNAL(clicked()), this, SLOT(distanceEuclideanSlot()));
   distanceGroup->setLayout(distanceLayout);
   bakeLayout->addWidget(distanceGroup);
+
+  curveLayout->addWidget(curve);
+  connect(curve, SIGNAL(clicked()), this, SLOT(curveSlot()));
+  curveGroup->setLayout(curveLayout);
+  bakeLayout->addWidget(curveGroup);
 
   trivial_texture->click();
 
@@ -142,4 +146,8 @@ void Window::distanceChessBoardSlot () {
 void Window::distanceEuclideanSlot () {
    glWidget->set_bake_type ("texture distance transform");
    glWidget->set_transform_type ("euclidean");
+}
+
+void Window::curveSlot () {
+   qDebug () << "curve";
 }

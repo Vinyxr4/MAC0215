@@ -14,6 +14,10 @@ public:
 
 private:
     Window* window_;
+    QStringList fonts;
+
+    int current_font_to_add;
+    void change_font (int i);
 };
 
 #endif

@@ -9,11 +9,8 @@
 #include <QCoreApplication>
 
 #include "input.h"
-#include "text.h"
 
 QOpenGLTexture *texture = NULL;
-
-text *Text;
 QString atlas = "teste.png";
 
 GLWidget::GLWidget(int step, QWidget *parent)

@@ -44,6 +44,9 @@ public:
     // Set the number of layers
     void set_layer (int l);
 
+    // Defines the font to be used
+    void define_font_type (QString font);
+
     std::vector<QVector3D> font_vertices;
     std::vector<QVector2D> font_texture;
 
@@ -60,9 +63,6 @@ private:
 
     // Bakes an atlas
     void bake (int max_resolution, int max_size);
-
-    // Defines the font to be used
-    void define_font_type (QString font);
 
     // Defines the path used to save the baked atlas
     void define_atlas (QString atlas);

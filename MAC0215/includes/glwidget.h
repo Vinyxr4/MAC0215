@@ -17,6 +17,7 @@ QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
 #include "camera3d.h"
 #include "transform3d.h"
+#include "text.h"
 
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -40,6 +41,7 @@ public:
     float albedo, last_albedo;
     bool changed = false;
     bool change_render = false;
+    text *Text;
 
     QOpenGLShaderProgram *m_program;
     QOpenGLShader *shader;

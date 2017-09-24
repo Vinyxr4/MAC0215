@@ -9,6 +9,8 @@
 #include <QTabWidget>
 #include <QRadioButton>
 
+#include "glwidget.h"
+
 QT_BEGIN_NAMESPACE
 class QSlider;
 class QPushButton;
@@ -25,6 +27,7 @@ public:
     Window(MainWindow *mw, int step, int shininess);
     void connectWidgetUpdate();
     void disconnectWidgetUpdate();
+    void change_font (QString new_font_path);
 
 private slots:
     void valueAl(int);
@@ -33,6 +36,7 @@ private slots:
     void distanceCityBlockSlot ();
     void distanceEuclideanSlot ();
     void distanceChessBoardSlot ();
+    void curveSlot ();
 
 private:
     QSlider *createSlider();
@@ -47,6 +51,7 @@ private:
 
     QPushButton *distance_chess_board, *distance_city_block, *distance_euclidean;
     QPushButton *trivial_texture, *trivial_mip;
+    QPushButton *curve;
 
     // Sliders
     QSlider *albedoSlider;
