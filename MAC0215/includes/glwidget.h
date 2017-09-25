@@ -37,6 +37,8 @@ public:
     void set_bake_type (QString new_bake_type);
     void set_transform_type (QString new_transform_type);
     void set_trivial_type (QString new_trivial_type);
+    void set_gamma_value (float new_value);
+    void set_atlas_dimension_value (float new_value);
 
     float albedo, last_albedo;
     bool changed = false;
@@ -79,6 +81,7 @@ private:
     int u_modelToWorld;
     int u_cameraToView;
     int u_worldToCamera;
+    int u_gamma;
 
     Camera3D m_camera;
     QMatrix4x4 m_projection;
@@ -97,6 +100,9 @@ private:
     float dist_to_pages = -100.0;
     float zoom_factor = 0.65;
     float w_size, h_size;
+
+    float gamma_value = 0.05;
+    float atlas_dimension_value = 0.5;
 
     QMetaObject::Connection m_connection;
 

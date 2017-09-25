@@ -8,6 +8,7 @@ distance_transform::distance_transform (image new_image, int new_height, int new
     transform = image (original_image);
     height = new_height;
     width = new_width;
+    metric = "trivial";
 }
 
 /*** Public methods ***/
@@ -110,6 +111,9 @@ void distance_transform::closest_raster (image &to_transform, int row, int col) 
     if ((int) to_transform.size () > cl)
         cl = to_transform.size ();
 
+    if (metric == "city_block")
+        cl = to_transform[0].size () +  to_transform.size () - 2;
+
     for (int i = row - 1; i <= row; ++i) {
         if (i < 0 || i == (int) to_transform.size()) continue;
         for (int j = col - 1; j <= col + 1; ++j) {
@@ -127,6 +131,9 @@ void distance_transform::closest_anti_raster (image &to_transform, int row, int 
     int cl = to_transform[0].size ();
     if ((int) to_transform.size () > cl)
         cl = to_transform.size ();
+
+    if (metric == "city_block")
+        cl = to_transform[0].size () +  to_transform.size () - 2;
 
     for (int i = row + 1; i >= row; --i) {
         if (i < 0 || i == (int) to_transform.size()) continue;
@@ -195,11 +202,17 @@ image distance_transform::meijester_phase_1 (image to_transform) {
 
         for (int j = 1; j < (int) to_transform[0].size (); ++j) {
             if (to_transform[i][j]) g.push_back (0);
+            else if (g[j - 1] == true_inf) g.push_back (true_inf);
             else g.push_back (1 + g[j - 1]);
         }
 
         for (int j = to_transform[i].size () - 2; j >= 0; --j)
-            if (g[j + 1] < g[j]) g[j] = 1 + g[j + 1];
+            if (g[j + 1] < g[j]) {
+                if (g[j + 1] == true_inf)
+                    g[j] = true_inf;
+                else
+                    g[j] = 1 + g[j + 1];
+            }
         G.push_back (g);
     }
 
@@ -217,7 +230,7 @@ image distance_transform::meijester_phase_2 (image G) {
                 int new_f = (i - k) * (i - k) + G[k][j] * G[k][j];
                 if (new_f < f) f = new_f;
             }
-            line.push_back (f);
+            line.push_back (sqrt(f));
         }
         final_transform.push_back(line);
     }

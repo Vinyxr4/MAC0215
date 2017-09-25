@@ -1,6 +1,7 @@
 #include "text.h"
 #include <iostream>
 #include <locale>
+#include <QDebug>
 
 int dpi_test = 500;
 int resol_test = 1000;
@@ -10,6 +11,28 @@ text::text (QString font, QString atlas) {
     define_font_type (QString (font));
     define_atlas (atlas);
     set_layer (1);
+    /*
+    image test;
+    bake_type = "distance transform city_block";
+
+    for (int i = 0; i < 5; ++i) {
+        std::vector<int> line;
+        for (int j = 0; j < 5; ++j)
+            line.push_back(1);
+        test.push_back (line);
+    }
+
+    test[4][4] = 0;
+
+    distance_transform transform_test (test, 5, 5);
+    do_transform (transform_test);
+
+    for (int i = 0; i < 5; ++i)
+        for (int j = 0; j < 5; ++j)
+        qDebug () << transform_test.get_transform_element(i,j);
+
+    */
+
 }
 
 /*** Public metthods ***/
@@ -75,14 +98,23 @@ void text::define_text_from_pdf (QString pdf_path) {
     bbox = extractor->get_bbox(0);
     extractor->end ();
 
+    QString highlowers = "bdfhijklt";
+    QString pontuation = ",.;";
+
     std::vector<QVector3D> txt_vertices;
     int i, j;
-    float scale = 0.5;
     for (i = 0, j = 0; i < txt.size(); ++i, j += 4) {
+        float scale = 0.5;
+        float low_y_scale = 1;
+        float low_x_scale = 1;
+        if (txt[i].isLower() && !highlowers.contains(txt[i], Qt::CaseSensitive))
+            low_y_scale = 0.7;
+        if (pontuation.contains(txt[i]))
+            low_y_scale = 0.3;
         txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 1], 0)*scale);
-        txt_vertices.push_back (QVector3D (bbox[j + 2], bbox[j + 1], 0)*scale);
-        txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 3], 0)*scale);
-        txt_vertices.push_back (QVector3D (bbox[j + 2], bbox[j + 3], 0)*scale);
+        txt_vertices.push_back (QVector3D (bbox[j] +  (bbox[j + 2] - bbox[j]) * low_x_scale, bbox[j + 1], 0)*scale);
+        txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 1] + (bbox[j + 3] - bbox[j + 1]) * low_y_scale, 0)*scale);
+        txt_vertices.push_back (QVector3D (bbox[j] +  (bbox[j + 2] - bbox[j]) * low_x_scale, bbox[j + 1] + (bbox[j + 3] - bbox[j + 1]) * low_y_scale, 0)*scale);
     }
 
     define_text (txt, txt_vertices);
@@ -140,10 +172,10 @@ void text::bake (int max_resolution, int max_size) {
     int DPI = max_resolution;
 
     std::locale loc("en_US.UTF-8");
-    if (bake_type.indexOf("distance transform") > -1)
+    /*if (bake_type.indexOf("distance transform") > -1)
         FT_Set_Char_Size (face, 0, GLYPH_HEIGHT, DPI/2, DPI/2);
-    else
-        FT_Set_Char_Size (face, 0, GLYPH_HEIGHT, DPI, DPI);
+    else*/
+    FT_Set_Char_Size (face, 0, GLYPH_HEIGHT, DPI, DPI);
     int num_glyphs = face->num_glyphs;
 
     FT_Size_Metrics_ metric = face->size->metrics;
@@ -195,7 +227,8 @@ void text::bake (int max_resolution, int max_size) {
         FT_Set_Char_Size (face, 0, GLYPH_HEIGHT, DPI, DPI);
     }
 
-    texture.save(atlas_path, Q_NULLPTR, 50);
+    QImage test = texture.scaled(atlas_dimension * texture.height(), atlas_dimension * texture.width(),Qt::KeepAspectRatio);
+    test.save(atlas_path, Q_NULLPTR, 50);
     FT_Done_FreeType(ft);
 }
 
@@ -228,13 +261,25 @@ void text::prepare_texture (distance_transform transform, QImage &texture, int x
 
     float max = transform.get_height ();
     if (transform.get_metric() == "euclidean")
-        max += transform.get_width ();
+        max = sqrt (transform.get_width()*transform.get_width() + transform.get_height ()*transform.get_width());
+    if (transform.get_metric() == "city_block")
+        max = transform.get_height () +  transform.get_width ();
+    if (transform.get_metric() == "chessboard")
+        max = transform.get_height () + transform.get_width();
     else if (transform.get_width () > max) max = transform.get_width ();
 
+
     for (int row = 0; row < transform.get_height (); ++row) {
+        int color_cmp;
+        float element;
         for (int col = 0; col < transform.get_width (); ++col) {
-            float element = (1.0 * transform.get_transform_element (row, col)) / max;
-            int color_cmp = 255 * (0.5 * element + 0.5);
+            element = (1.0 * transform.get_transform_element (row, col)) / max;
+            if (transform.get_metric() == "trivial")
+                color_cmp = 255 * transform.get_transform_element (row, col);
+            else
+                color_cmp = 255 * (0.5 * element + 0.5);
+            if (color_cmp > 255) color_cmp = 255;
+            if (color_cmp < 0) color_cmp = 0;
             color = qRgb (color_cmp, color_cmp, color_cmp);
             texture.setPixel (col + x_off, row + y_off, color);
         }
@@ -247,4 +292,8 @@ void text::define_font_type (QString font) {
 
 void text::define_atlas (QString atlas) {
     atlas_path = atlas;
+}
+
+void text::set_atlas_dimension_value (float new_value) {
+    atlas_dimension = new_value;
 }

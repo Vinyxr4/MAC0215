@@ -37,6 +37,7 @@ class extractor:
 				#self.pages[-1].bbox.append (element.y0)
 				#self.pages[-1].bbox.append (element.x0 + element.width * element.size)
 				#self.pages[-1].bbox.append (element.y0 + element.height * element.size)
+				#print element.matrix
 				for i in range (0, 4):
 					self.pages[-1].bbox.append (element.bbox[i])
 				#print (element.height)

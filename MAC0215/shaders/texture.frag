@@ -1,14 +1,18 @@
+
+precision highp float;
+
 uniform sampler2D texture;
-varying vec4 tex;
+varying vec2 tex;
+uniform float gamma;
 
 void main(void) {
-    vec4 t = texture2D(texture, tex.st);
+    vec4 t = texture2D(texture, tex);
 
-    vec4 color = vec4 (0, 0, 0, 1);
+    vec4 color = vec4 (0, 0.0, 0, 1);
 
-    float d = 0.001;
+    //float gamma = 0.05;
 
-    float alpha = smoothstep (0.5 - d, 0.5 + d, t.r);
+    float alpha = smoothstep (0.5 - gamma, 0.5 + gamma, t.r);
 
     gl_FragColor = vec4(1, 1, 1 , alpha) * color;
     //gl_FragColor = vec4(1, 1, 1 , t.r) * color;

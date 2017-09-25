@@ -31,6 +31,8 @@ public:
 
 private slots:
     void valueAl(int);
+    void valueGa(int);
+    void valueAD(int);
     void trivialTexSlot ();
     void trivialMipSlot ();
     void distanceCityBlockSlot ();
@@ -39,10 +41,12 @@ private slots:
     void curveSlot ();
 
 private:
-    QSlider *createSlider();
+    QSlider *createSlider(int min, int max);
     QGroupBox* createBakeTypeBoxes();
 
     float albedo_factor = 100.0;
+    float gamma_factor = 0.01;
+    float atlas_factor = 0.1;
 
     MainWindow *mainWindow;
     int step_;
@@ -55,11 +59,16 @@ private:
 
     // Sliders
     QSlider *albedoSlider;
+    QSlider *textureSizeSlider;
+    QSlider *gammaSlider;
 
     // Labels
     QLabel *albedoLabel;
+    QLabel *textureSizeLabel;
+    QLabel *gammaLabel;
 
     QGroupBox* createParameterSliders();
+    QGroupBox* createGammaSliders();
 };
 
 #endif

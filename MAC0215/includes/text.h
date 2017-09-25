@@ -47,6 +47,8 @@ public:
     // Defines the font to be used
     void define_font_type (QString font);
 
+    void set_atlas_dimension_value (float new_value);
+
     std::vector<QVector3D> font_vertices;
     std::vector<QVector2D> font_texture;
 
@@ -60,6 +62,7 @@ private:
     std::vector<std::vector<glyph>> glyph_set;
     QString code_path = "../MAC0215/src/";
     QString pdf_test_path = "../MAC0215/pdf/";
+    float atlas_dimension = 0.5;
 
     // Bakes an atlas
     void bake (int max_resolution, int max_size);

@@ -22,9 +22,12 @@ Window::Window(MainWindow *mw, int step, int shininess)
   QGridLayout *container = new QGridLayout;
   QGroupBox *bakerGroup = createBakeTypeBoxes ();
 
+  QGroupBox *gammaGroup = createGammaSliders();
+
   container->addWidget(glWidget, 0, 0, 4, 1);
   container->addWidget(bakerGroup, 0,1);
-  container->addWidget(controllersGroup, 4,1,1,2);
+  container->addWidget(gammaGroup, 2,1);
+  container->addWidget(controllersGroup, 3,1);
   container->setColumnStretch(0, 10);
 
   QWidget *centralWidget = new QWidget;
@@ -39,7 +42,7 @@ QGroupBox* Window::createParameterSliders() {
   QGridLayout *controllersLayout = new QGridLayout;
   int currentRow = 0;
 
-  albedoSlider = createSlider();
+  albedoSlider = createSlider(0, 100);
   albedoLabel = new QLabel(tr("Zoom:"));
   controllersLayout->addWidget(albedoLabel, currentRow, 0);
   controllersLayout->addWidget(albedoSlider, currentRow, 1);
@@ -48,8 +51,34 @@ QGroupBox* Window::createParameterSliders() {
   connect(albedoSlider, SIGNAL(valueChanged(int)), this, SLOT(valueAl(int)));
   currentRow++;
 
+  textureSizeSlider = createSlider(0, 10);
+  textureSizeLabel = new QLabel(tr("Atlas dimension:"));
+  controllersLayout->addWidget(textureSizeLabel, currentRow, 0);
+  controllersLayout->addWidget(textureSizeSlider, currentRow, 1);
+  textureSizeSlider->setValue(5);
+  glWidget->albedo = albedo_factor * 0.5;
+  connect(textureSizeSlider, SIGNAL(valueChanged(int)), this, SLOT(valueAD(int)));
+  currentRow++;
+
   controllersGroup->setLayout(controllersLayout);
   return controllersGroup;
+}
+QGroupBox* Window::createGammaSliders() {
+  QGroupBox *gammaGroup = new QGroupBox(tr("Anti aliasing:"));
+  QGridLayout *gammaLayout = new QGridLayout;
+  int currentRow = 0;
+
+  gammaSlider = createSlider(0, 10);
+  gammaLabel = new QLabel(tr("Gamma:"));
+  gammaLayout->addWidget(gammaLabel, currentRow, 0);
+  gammaLayout->addWidget(gammaSlider, currentRow, 1);
+  gammaSlider->setValue(5);
+  glWidget->set_gamma_value (0.05);
+  connect(gammaSlider, SIGNAL(valueChanged(int)), this, SLOT(valueGa(int)));
+  currentRow++;
+
+  gammaGroup->setLayout(gammaLayout);
+  return gammaGroup;
 }
 
 void Window::disconnectWidgetUpdate() {
@@ -65,9 +94,9 @@ void Window::change_font (QString new_font_path) {
     glWidget->change_render = true;
 }
 
-QSlider *Window::createSlider() {
+QSlider *Window::createSlider(int min, int max) {
   QSlider *slider = new QSlider(Qt::Horizontal);
-  slider->setRange(0, 100);
+  slider->setRange(min, max);
   slider->setSingleStep(1);
   slider->setTickPosition(QSlider::TicksRight);
   return slider;
@@ -122,6 +151,15 @@ void Window::valueAl(int nv) {
     glWidget->changed = true;
 }
 
+void Window::valueGa(int nv) {
+    glWidget->set_gamma_value (gamma_factor * nv);
+}
+
+void Window::valueAD (int nv) {
+    if (!nv) nv++;
+    glWidget->set_atlas_dimension_value (atlas_factor * nv);
+}
+
 // Bake type button controller
 void Window::trivialTexSlot () {
    glWidget->set_bake_type ("trivial");
@@ -140,7 +178,7 @@ void Window::distanceCityBlockSlot () {
 
 void Window::distanceChessBoardSlot () {
    glWidget->set_bake_type ("texture distance transform");
-   glWidget->set_transform_type ("chess_board");
+   glWidget->set_transform_type ("chessboard");
 }
 
 void Window::distanceEuclideanSlot () {
@@ -151,3 +189,4 @@ void Window::distanceEuclideanSlot () {
 void Window::curveSlot () {
    qDebug () << "curve";
 }
+

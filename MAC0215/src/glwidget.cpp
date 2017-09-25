@@ -35,6 +35,15 @@ void GLWidget::set_trivial_type (QString new_trivial_type) {
     change_render = true;
 }
 
+void GLWidget::set_gamma_value (float new_value) {
+    gamma_value = new_value;
+}
+
+void GLWidget::set_atlas_dimension_value (float new_value) {
+    atlas_dimension_value = new_value;
+    change_render = true;
+}
+
 void GLWidget::initTex (QString url) {
     texture = new QOpenGLTexture (QImage (url).mirrored());
 
@@ -53,14 +62,16 @@ void GLWidget::set_render_mode (int layers) {
     m_program->bind();
     disconnectUpdate ();
     if (change_render) {
+        Text->set_atlas_dimension_value (atlas_dimension_value);
         if (bake_type == "trivial") {
             if (trivial_type == "texture")
                 Text->bake_atlas ();
             else if (trivial_type == "texture mip")
                 Text->bake_atlas ();
         }
-        else if (bake_type == "texture distance transform")
+        else if (bake_type == "texture distance transform") {
             Text->bake_dist_transf (transform_type);
+        }
         Text->gen_test_pdf ();
         loadTexture (atlas);
         LoadText (layers);
@@ -142,7 +153,7 @@ void GLWidget::initializeGL() {
   // Set global information
   glEnable(GL_DEPTH_TEST);
   glDepthRange(0,1);
-  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 
   initTex (atlas);
   //texture->setMipLevels(layers);
@@ -163,6 +174,7 @@ void GLWidget::initializeGL() {
     u_modelToWorld = m_program->uniformLocation("modelToWorld");
     u_worldToCamera = m_program->uniformLocation("worldToCamera");
     u_cameraToView = m_program->uniformLocation("cameraToView");
+    u_gamma = m_program->uniformLocation ("gamma");
     m_texAttr = m_program->attributeLocation("texCoord");
 
     // Create Buffer (Do not release until VAO is created)
@@ -227,6 +239,7 @@ void GLWidget::paintGL() {
 
   m_program->setUniformValue(u_worldToCamera, m_camera.toMatrix());
   m_program->setUniformValue(u_cameraToView, m_projection);
+  m_program->setUniformValue (u_gamma, gamma_value);
   m_program->setUniformValue("texture", 0);
   {
     glEnable(GL_BLEND);
@@ -246,6 +259,7 @@ void GLWidget::resizeGL(int w, int h) {
   w_size = float(w);
   h_size = float(h);
   m_projection.setToIdentity();
+  //m_projection.ortho(-zoom*5 *float(w)/float(h), zoom* 5 *float(w)/float(h), -zoom*5, zoom*5,  1, 1000);
   m_projection.perspective(180.0f * zoom, w / float(h), 1.0f, 1000.0f);
 }
 
