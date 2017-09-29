@@ -3,26 +3,11 @@
 
 #include <vector>
 #include <string>
-#include <queue>
+#include <min_heap.h>
 
 typedef std::vector<std::vector<int>> image;
 typedef std::vector<std::vector<bool>> image_check;
 typedef std::vector<int> coordinate;
-
-struct heap_element {
-    int x_pos, y_pos;
-    float distance;
-
-    heap_element (int x=0, int y=0, float dist=0.0):
-        x_pos(x), y_pos (y), distance(dist){}
-};
-
-struct compare_distances {
-    bool operator () (const heap_element &l, const heap_element &r) {
-        return l.distance > r.distance;
-    }
-};
-typedef std::priority_queue<heap_element, std::vector<heap_element>, compare_distances> fmm_priority_queue;
 
 class distance_transform {
 public:
@@ -58,6 +43,7 @@ private:
     image transform;
     std::string metric;
     int height, width;
+    int connectivity = 8;
 
     // Labels to_transform cells by distance to the complementary pixel in raster swipe
     void closest_raster (image &to_transform, int row, int col);
@@ -86,7 +72,12 @@ private:
     image transpose (image to_transpose);
 
     image fmm (image to_transform);
-    void initialize_fmm (image to_transform, fmm_priority_queue &queue, image_check &checked);
+    void initialize_fmm (image to_transform, image &new_transform, priority_queue &queue, image_check &checked);
+
+    void update_neighbors (priority_queue &queue, heap_element curr, image_check &checked);
+    void update_4 (priority_queue &queue, heap_element curr, image_check &checked);
+    void update_4_more (priority_queue &queue, heap_element curr, image_check &checked);
+    void fmm_distance (heap_element curr, int x, int y, priority_queue &queue, image_check &checked);
 };
 
 #endif // DISTANCE_TRANSFORM_H

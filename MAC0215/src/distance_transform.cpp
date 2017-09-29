@@ -10,7 +10,20 @@ distance_transform::distance_transform (image new_image, int new_height, int new
     width = new_width;
     metric = "trivial";
 
-    //std::priority_queue<heap_element, std::vector<heap_element>, compare_distances> fmm_queue;
+    image test;
+    for (int i = 0; i < 5; ++i) {
+        std::vector<int> line;
+        for (int j = 0; j < 5; ++j)
+            line.push_back(0);
+        test.push_back(line);
+    }
+
+    test[0][0] = 1;
+    test[4][0] = 1;
+    test[4][4] = 1;
+    image test_transf = fmm (test);
+    for (int i = 0; i < 5; ++i)
+        qDebug () << test_transf[i];
 }
 
 /*** Public methods ***/
@@ -252,22 +265,73 @@ image distance_transform::transpose (image to_transpose) {
 
     return transposed;
 }
-/*
-void distance_transform::initialize_fmm (image to_transform, fmm_priority_queue &queue, image_check &checked) {
-    for (int row = 0; row < height; ++row) {
-        for (int col = 0; col < width; ++col) {
+
+image distance_transform::fmm (image to_transform) {
+    image_check marked;
+    priority_queue fmm_queue;
+    image new_transform = to_transform;
+
+    initialize_fmm (to_transform, new_transform, fmm_queue, marked);
+
+    while (!fmm_queue.empty()) {
+        heap_element dequed = fmm_queue.top();
+        fmm_queue.pop ();
+        if (!marked[dequed.x_pos][dequed.y_pos]) {
+            marked[dequed.x_pos][dequed.y_pos] = true;
+            new_transform[dequed.x_pos][dequed.y_pos] = dequed.distance;
+            update_neighbors (fmm_queue, dequed, marked);
+        }
+    }
+
+    return new_transform;
+}
+
+
+void distance_transform::initialize_fmm (image to_transform, image &new_transform, priority_queue &queue, image_check &checked) {
+    for (int row = 0; row < (int) to_transform.size(); ++row) {
+        std::vector<bool> line;
+        for (int col = 0; col < (int) to_transform[0].size(); ++col)
+            line.push_back(false);
+        checked.push_back(line);
+    }
+
+    for (int row = 0; row < (int) to_transform.size(); ++row) {
+        for (int col = 0; col < (int) to_transform[0].size(); ++col) {
             if (to_transform[row][col]) {
                 checked[row][col] = true;
-                update_neighbors(to_transform, queue);
+                new_transform[row][col] = 0;
+                heap_element current = heap_element (row, col, 0);
+                update_neighbors(queue, current, checked);
             }
         }
     }
 }
 
-image distance_transform::fmm (image to_transform) {
-    image_check marked;
-    fmm_priority_queue fmm_queue;
-
-    initialize_fmm (to_transform, fmm_queue, marked);
+void distance_transform::update_neighbors (priority_queue &queue, heap_element curr, image_check &checked) {
+    update_4 (queue, curr, checked);
+    if (connectivity == 8)
+        update_4_more (queue, curr, checked);
 }
-*/
+
+void distance_transform::update_4 (priority_queue &queue, heap_element curr, image_check &checked) {
+    fmm_distance (curr, curr.x_pos, curr.y_pos-1, queue, checked);
+    fmm_distance (curr, curr.x_pos+1, curr.y_pos, queue, checked);
+    fmm_distance (curr, curr.x_pos, curr.y_pos+1, queue, checked);
+    fmm_distance (curr, curr.x_pos-1, curr.y_pos, queue, checked);
+}
+
+void distance_transform::update_4_more (priority_queue &queue, heap_element curr, image_check &checked) {
+    fmm_distance (curr, curr.x_pos-1, curr.y_pos-1, queue, checked);
+    fmm_distance (curr, curr.x_pos+1, curr.y_pos-1, queue, checked);
+    fmm_distance (curr, curr.x_pos+1, curr.y_pos+1, queue, checked);
+    fmm_distance (curr, curr.x_pos-1, curr.y_pos+1, queue, checked);
+}
+
+void distance_transform::fmm_distance (heap_element curr, int x, int y, priority_queue &queue, image_check &checked) {
+    int h = checked.size(), w = checked[0].size();
+    if (x >= 0 && y >= 0 && x < h && y < w && !checked[x][y]) {
+        float distance = curr.distance + sqrt ((curr.x_pos-x)*(curr.x_pos-x)+(curr.y_pos-y)*(curr.y_pos-y));
+        heap_element new_element = heap_element (x, y, distance);
+        queue.push(new_element);
+    }
+}

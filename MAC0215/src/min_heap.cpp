@@ -1,24 +1,18 @@
 #include "min_heap.h"
 
-template <class T>
-void min_heap<T>::put_to_end (int index) {
-    T temp = heap[index];
-    heap[index] = heap[last];
-    heap[last] = temp;
-
-    order_heap ();
+min_heap::min_heap() {
+    last = 0;
 }
 
-template <class T>
-void min_heap<T>::order_heap () {
+void min_heap::order_heap () {
     for (int p = (last-1) >> 1; p >= 0; --p) {
         int parent = p;
         while (parent <= (last-1) >> 1) {
             int to_change = (parent << 1) + 1;
-            if (heap[to_change+1] < heap[to_change])
+            if (heap[to_change+1].distance < heap[to_change].distance)
                 to_change++;
-            if (heap[to_change] < heap[parent]) {
-                T temp = heap[to_change];
+            if (heap[to_change].distance < heap[parent].distance) {
+                heap_element temp = heap[to_change];
                 heap[to_change] = heap[parent];
                 heap[parent] = temp;
                 parent = to_change;
@@ -28,25 +22,53 @@ void min_heap<T>::order_heap () {
     }
 }
 
-template <class T>
-void min_heap<T>::insert (T element) {
+void min_heap::insert (heap_element element) {
     heap.push_back (element);
     last++;
-    order_heap();
+    swim(last);
 }
 
-void min_heap<T>::update (T element) {
-    int i = 0;
-    while (i <= last) {
-        if (equals (heap[i], element) && element < heap[i]) {
-            heap[i] = element;
-            order_heap ();
-            break;
+void min_heap::swim (int index) {
+    int parent = (index-1) >> 1;
+
+    while (1) {
+        int child = (parent << 1) + 1;
+        if (heap[child+1].distance < heap[child].distance)
+            child++;
+        if (heap[child].distance < heap[parent].distance) {
+            heap_element temp = heap[child];
+            heap[child] = heap[parent];
+            heap[parent] = temp;
+            if (parent - 1 < 0) break;
+            parent = (parent-1) >> 1;
         }
-        int next = i>>2;
-        if (heap[next+1] < heap[next]) ++next;
-        i = next;
+        else break;
     }
-    if (i > last)
-        insert(element);
+}
+
+void min_heap::dive (int index) {
+    int parent = index;
+
+    while (parent <= (last-1)>>1) {
+        int child = (parent << 1) + 1;
+        if (heap[child+1].distance < heap[child].distance)
+            child++;
+        if (heap[child].distance < heap[parent].distance) {
+            heap_element temp = heap[child];
+            heap[child] = heap[parent];
+            heap[parent] = temp;
+            parent = child;
+        }
+        else break;
+    }
+}
+
+void min_heap::update (int index) {
+    int child = (index << 1) + 1;
+    if (heap[child+1].distance < heap[child].distance)
+        child++;
+
+    if (heap[child].distance >= heap[index].distance)
+        swim (index);
+    else dive (index);
 }
