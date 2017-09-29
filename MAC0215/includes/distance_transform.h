@@ -26,6 +26,8 @@ public:
     // Performs distance transform using euclidean metric
     void faster_euclidean ();
 
+    void fast_marching ();
+
     // Returns the transformation's element on the coordinate (row, col)
     int get_transform_element (int row, int col);
 

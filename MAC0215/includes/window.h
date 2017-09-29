@@ -38,6 +38,7 @@ private slots:
     void distanceCityBlockSlot ();
     void distanceEuclideanSlot ();
     void distanceChessBoardSlot ();
+    void distanceFMMSlot ();
     void curveSlot ();
 
 private:
@@ -54,6 +55,7 @@ private:
     GLWidget *glWidget;
 
     QPushButton *distance_chess_board, *distance_city_block, *distance_euclidean;
+    QPushButton *distance_fmm;
     QPushButton *trivial_texture, *trivial_mip;
     QPushButton *curve;
 

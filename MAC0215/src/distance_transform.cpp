@@ -10,6 +10,7 @@ distance_transform::distance_transform (image new_image, int new_height, int new
     width = new_width;
     metric = "trivial";
 
+    /*
     image test;
     for (int i = 0; i < 5; ++i) {
         std::vector<int> line;
@@ -24,12 +25,14 @@ distance_transform::distance_transform (image new_image, int new_height, int new
     image test_transf = fmm (test);
     for (int i = 0; i < 5; ++i)
         qDebug () << test_transf[i];
+        */
 }
 
 /*** Public methods ***/
 
 void distance_transform::chess_board () {
     metric = "chessboard";
+    connectivity = 8;
 
     image first_transform  = one_color_run (original_image);
     image second_transform = one_color_run (revert (original_image));
@@ -39,6 +42,7 @@ void distance_transform::chess_board () {
 
 void distance_transform::city_block() {
     metric = "city_block";
+    connectivity = 4;
 
     image first_transform  = one_color_run (original_image);
     image second_transform = one_color_run (revert (original_image));
@@ -64,6 +68,15 @@ void distance_transform::faster_euclidean () {
     image second_transform = meijester_phase_2 (G);
 
     transform =  join_binary_transform (first_transform, second_transform);
+}
+
+void distance_transform::fast_marching () {
+    metric = "fast_marching";
+
+    image first_transform = fmm (original_image);
+    image second_transform = fmm (revert (original_image));
+
+    transform = join_binary_transform(first_transform,second_transform);
 }
 
 int distance_transform::get_transform_element (int row, int col) {

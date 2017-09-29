@@ -239,6 +239,9 @@ void text::do_transform (distance_transform &transform) {
         transform.chess_board ();
     else if (bake_type == "distance transform euclidean")
         transform.faster_euclidean ();
+    else if (bake_type == "distance transform fast marching")
+        transform.fast_marching ();
+
 }
 
 std::vector<std::vector<int>> text::construct_image (FT_Bitmap *bmp) {
@@ -265,6 +268,8 @@ void text::prepare_texture (distance_transform transform, QImage &texture, int x
     if (transform.get_metric() == "city_block")
         max = transform.get_height () +  transform.get_width ();
     if (transform.get_metric() == "chessboard")
+        max = transform.get_height () + transform.get_width();
+    if (transform.get_metric() == "fast marching")
         max = transform.get_height () + transform.get_width();
     else if (transform.get_width () > max) max = transform.get_width ();
 
