@@ -13,7 +13,8 @@ qmakeforce.depends = FORCE
 PRE_TARGETDEPS += $$qmakeforce.target
 QMAKE_EXTRA_TARGETS += qmakeforce
 
-HEADERS += $$files(includes/*.h, true)
+HEADERS += $$files(includes/*.h, true) \
+    includes/min_heap.h
 
 VPATH += src/
 SOURCES += main.cpp \
@@ -26,7 +27,8 @@ SOURCES += main.cpp \
     glyph.cpp \
     text.cpp \
     pdf_extractor.cpp \
-    distance_transform.cpp
+    distance_transform.cpp \
+    src/min_heap.cpp
 
 LIBS += -lz -lfreetype -lpython2.7
 INCLUDEPATH += /usr/include/freetype2 /usr/include/python2.7 includes/

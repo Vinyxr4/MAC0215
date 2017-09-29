@@ -3,9 +3,26 @@
 
 #include <vector>
 #include <string>
+#include <queue>
 
 typedef std::vector<std::vector<int>> image;
+typedef std::vector<std::vector<bool>> image_check;
 typedef std::vector<int> coordinate;
+
+struct heap_element {
+    int x_pos, y_pos;
+    float distance;
+
+    heap_element (int x=0, int y=0, float dist=0.0):
+        x_pos(x), y_pos (y), distance(dist){}
+};
+
+struct compare_distances {
+    bool operator () (const heap_element &l, const heap_element &r) {
+        return l.distance > r.distance;
+    }
+};
+typedef std::priority_queue<heap_element, std::vector<heap_element>, compare_distances> fmm_priority_queue;
 
 class distance_transform {
 public:
@@ -67,6 +84,9 @@ private:
     image meijester_phase_1 (image to_transform);
     image meijester_phase_2 (image G);
     image transpose (image to_transpose);
+
+    image fmm (image to_transform);
+    void initialize_fmm (image to_transform, fmm_priority_queue &queue, image_check &checked);
 };
 
 #endif // DISTANCE_TRANSFORM_H

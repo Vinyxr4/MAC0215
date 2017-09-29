@@ -9,6 +9,8 @@ distance_transform::distance_transform (image new_image, int new_height, int new
     height = new_height;
     width = new_width;
     metric = "trivial";
+
+    //std::priority_queue<heap_element, std::vector<heap_element>, compare_distances> fmm_queue;
 }
 
 /*** Public methods ***/
@@ -250,3 +252,22 @@ image distance_transform::transpose (image to_transpose) {
 
     return transposed;
 }
+/*
+void distance_transform::initialize_fmm (image to_transform, fmm_priority_queue &queue, image_check &checked) {
+    for (int row = 0; row < height; ++row) {
+        for (int col = 0; col < width; ++col) {
+            if (to_transform[row][col]) {
+                checked[row][col] = true;
+                update_neighbors(to_transform, queue);
+            }
+        }
+    }
+}
+
+image distance_transform::fmm (image to_transform) {
+    image_check marked;
+    fmm_priority_queue fmm_queue;
+
+    initialize_fmm (to_transform, fmm_queue, marked);
+}
+*/
