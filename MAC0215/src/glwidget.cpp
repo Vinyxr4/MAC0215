@@ -44,6 +44,11 @@ void GLWidget::set_atlas_dimension_value (float new_value) {
     change_render = true;
 }
 
+void GLWidget::set_atlas_resolution_value (float new_value) {
+    atlas_resolution_value = new_value;
+    change_render = true;
+}
+
 void GLWidget::initTex (QString url) {
     texture = new QOpenGLTexture (QImage (url).mirrored());
 
@@ -63,6 +68,7 @@ void GLWidget::set_render_mode (int layers) {
     disconnectUpdate ();
     if (change_render) {
         Text->set_atlas_dimension_value (atlas_dimension_value);
+        Text->set_atlas_resolution_value (atlas_resolution_value);
         if (bake_type == "trivial") {
             if (trivial_type == "texture")
                 Text->bake_atlas ();

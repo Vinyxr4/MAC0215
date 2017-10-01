@@ -5,7 +5,10 @@
 #include <string>
 #include <min_heap.h>
 
-typedef std::vector<std::vector<int>> image;
+typedef std::vector<std::vector<float>> image;
+typedef std::vector<int> line;
+typedef std::vector<std::vector<float>> float_image;
+typedef std::vector<float> image_line;
 typedef std::vector<std::vector<bool>> image_check;
 typedef std::vector<int> coordinate;
 
@@ -42,7 +45,7 @@ public:
 
 private:
     image original_image;
-    image transform;
+    image transform, fmm_to_transform;
     std::string metric;
     int height, width;
     int connectivity = 8;
@@ -73,8 +76,8 @@ private:
     image meijester_phase_2 (image G);
     image transpose (image to_transpose);
 
-    image fmm (image to_transform);
-    void initialize_fmm (image to_transform, image &new_transform, priority_queue &queue, image_check &checked);
+    image fmm (image to_transform, int h, int w);
+    int initialize_fmm(image to_transform, priority_queue &queue, image_check &checked);
 
     void update_neighbors (priority_queue &queue, heap_element curr, image_check &checked);
     void update_4 (priority_queue &queue, heap_element curr, image_check &checked);

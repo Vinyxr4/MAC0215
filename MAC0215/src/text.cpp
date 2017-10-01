@@ -16,7 +16,7 @@ text::text (QString font, QString atlas) {
     bake_type = "distance transform city_block";
 
     for (int i = 0; i < 5; ++i) {
-        std::vector<int> line;
+        image_line line;
         for (int j = 0; j < 5; ++j)
             line.push_back(1);
         test.push_back (line);
@@ -169,7 +169,8 @@ void text::bake (int max_resolution, int max_size) {
         qDebug() << "ruim new face";
 
     int GLYPH_HEIGHT = max_size;
-    int DPI = max_resolution;
+    int DPI = atlas_resolution * max_resolution;
+    int padding = 5;
 
     std::locale loc("en_US.UTF-8");
     /*if (bake_type.indexOf("distance transform") > -1)
@@ -199,10 +200,10 @@ void text::bake (int max_resolution, int max_size) {
             FT_Load_Char (face, i, FT_LOAD_RENDER | FT_LOAD_TARGET_LIGHT);
             FT_Bitmap *bmp = &face->glyph->bitmap;
             if (std::isprint((wchar_t) i, loc)) {
-                std::vector<std::vector<int>> img;
+                image img;
 
                 if (x + bmp->width >= texture_width)
-                    x = 0, y += (1 + (face->size->metrics.height >> 6));
+                    x = 0, y += (padding + (face->size->metrics.height >> 6));
 
                 img = construct_image (bmp);
                 distance_transform transform (img, bmp->rows, bmp->width);
@@ -211,7 +212,7 @@ void text::bake (int max_resolution, int max_size) {
                 prepare_texture (transform, texture, x, y);
                 set.push_back (glyph (x, y, bmp->rows, bmp->width, i));
 
-                x +=  1 + bmp->width;
+                x +=  padding + bmp->width;
             }
             else
                 set.push_back (glyph (0, 0, 0, 0, i));
@@ -244,10 +245,10 @@ void text::do_transform (distance_transform &transform) {
 
 }
 
-std::vector<std::vector<int>> text::construct_image (FT_Bitmap *bmp) {
-    std::vector<std::vector<int>> img;
+image text::construct_image (FT_Bitmap *bmp) {
+    image img;
     for (uint row = 0; row < bmp->rows; ++row) {
-        std::vector<int> line;
+        image_line line;
         for (uint col = 0; col < bmp->width; ++col) {
             if (bmp->buffer[row * bmp->pitch + col])
                 line.push_back(1);
@@ -270,7 +271,7 @@ void text::prepare_texture (distance_transform transform, QImage &texture, int x
     if (transform.get_metric() == "chessboard")
         max = transform.get_height () + transform.get_width();
     if (transform.get_metric() == "fast marching")
-        max = transform.get_height () + transform.get_width();
+        max = sqrt(transform.get_height ()*transform.get_height () + transform.get_width()*transform.get_width());
     else if (transform.get_width () > max) max = transform.get_width ();
 
 
@@ -278,7 +279,7 @@ void text::prepare_texture (distance_transform transform, QImage &texture, int x
         int color_cmp;
         float element;
         for (int col = 0; col < transform.get_width (); ++col) {
-            element = (1.0 * transform.get_transform_element (row, col)) / max;
+            element = transform.get_transform_element (row, col) / max;
             if (transform.get_metric() == "trivial")
                 color_cmp = 255 * transform.get_transform_element (row, col);
             else
@@ -301,4 +302,8 @@ void text::define_atlas (QString atlas) {
 
 void text::set_atlas_dimension_value (float new_value) {
     atlas_dimension = new_value;
+}
+
+void text::set_atlas_resolution_value (float new_value) {
+    atlas_resolution = new_value;
 }

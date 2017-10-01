@@ -10,22 +10,19 @@ distance_transform::distance_transform (image new_image, int new_height, int new
     width = new_width;
     metric = "trivial";
 
+    //qDebug() << "oi";
     /*
     image test;
     for (int i = 0; i < 5; ++i) {
-        std::vector<int> line;
+        image_line line;
         for (int j = 0; j < 5; ++j)
-            line.push_back(0);
+            line.push_back(1);
         test.push_back(line);
     }
 
-    test[0][0] = 1;
-    test[4][0] = 1;
-    test[4][4] = 1;
-    image test_transf = fmm (test);
-    for (int i = 0; i < 5; ++i)
-        qDebug () << test_transf[i];
-        */
+    test[0][0] = 0;
+    image test_transf = fmm (test, 5, 5);
+    */
 }
 
 /*** Public methods ***/
@@ -73,8 +70,8 @@ void distance_transform::faster_euclidean () {
 void distance_transform::fast_marching () {
     metric = "fast_marching";
 
-    image first_transform = fmm (original_image);
-    image second_transform = fmm (revert (original_image));
+    image first_transform = fmm (original_image, height, width);
+    image second_transform = fmm (revert (original_image), height, width);
 
     transform = join_binary_transform(first_transform,second_transform);
 }
@@ -102,7 +99,7 @@ image distance_transform::revert (image to_revert) {
 
     for (int i = 0; i < (int) reverted_image.size (); ++i)
         for (int j = 0; j < (int) reverted_image[0].size (); ++j)
-            reverted_image[i][j] = (reverted_image[i][j] + 1) % 2;
+            reverted_image[i][j] = ((int) reverted_image[i][j] + 1) % 2;
 
     return reverted_image;
 }
@@ -223,7 +220,7 @@ image distance_transform::meijester_phase_1 (image to_transform) {
     image G;
 
     for (int i = 0; i < (int) to_transform.size (); ++i) {
-        std::vector<int> g;
+        image_line g;
 
         if (to_transform[i][0]) g.push_back (0);
         else g.push_back (true_inf);
@@ -251,7 +248,7 @@ image distance_transform::meijester_phase_2 (image G) {
     image final_transform;
 
     for (int i = 0; i < (int) G.size (); ++i) {
-        std::vector<int> line;
+        image_line line;
         for (int j = 0; j < (int) G[i].size (); ++j) {
             int f = i * i + G[0][j] * G[0][j];
             for (int k = 1; k < (int) G.size (); ++k) {
@@ -270,7 +267,7 @@ image distance_transform::transpose (image to_transpose) {
     image transposed;
 
     for (int i = 0; i < (int) to_transpose.size (); ++i) {
-        std::vector<int> line;
+        image_line line;
         for (int j = 0; j < (int) to_transpose[0].size (); ++j)
             line.push_back (to_transpose[j][i]);
         transposed.push_back (line);
@@ -279,45 +276,55 @@ image distance_transform::transpose (image to_transpose) {
     return transposed;
 }
 
-image distance_transform::fmm (image to_transform) {
-    image_check marked;
+image distance_transform::fmm (image to_transform, int h, int w) {
+    image_check marked (h, std::vector<bool>(w,false));
     priority_queue fmm_queue;
-    image new_transform = to_transform;
+    image new_transform (h, image_line(w,0));
+    fmm_to_transform = to_transform;
 
-    initialize_fmm (to_transform, new_transform, fmm_queue, marked);
-
-    while (!fmm_queue.empty()) {
+    int num_frozen = initialize_fmm (to_transform, fmm_queue, marked);
+    int num_cells = h*w;
+    //qDebug() << "ok";
+    while (num_cells > num_frozen && !fmm_queue.empty()) {
         heap_element dequed = fmm_queue.top();
         fmm_queue.pop ();
-        if (!marked[dequed.x_pos][dequed.y_pos]) {
-            marked[dequed.x_pos][dequed.y_pos] = true;
-            new_transform[dequed.x_pos][dequed.y_pos] = dequed.distance;
+        int x = dequed.x_pos, y = dequed.y_pos;
+        if (!marked[x][y]) {
+            marked[x][y] = true;
+            num_frozen++;
+            new_transform[x][y] = dequed.distance;
             update_neighbors (fmm_queue, dequed, marked);
         }
     }
 
+    //qDebug() << h*w << num_frozen;
+    //for (int i = 0; i < 5; ++i)
+    //    qDebug () << new_transform[i];
+
+    /*
+    image to_return (h, line(w));
+    for (int i = 0; i < h;++i)
+        for (int j = 0; j < w;++j)
+            to_return[i][j] = new_transform[i][j];
+    */
     return new_transform;
 }
 
 
-void distance_transform::initialize_fmm (image to_transform, image &new_transform, priority_queue &queue, image_check &checked) {
-    for (int row = 0; row < (int) to_transform.size(); ++row) {
-        std::vector<bool> line;
-        for (int col = 0; col < (int) to_transform[0].size(); ++col)
-            line.push_back(false);
-        checked.push_back(line);
-    }
+int distance_transform::initialize_fmm (image to_transform, priority_queue &queue, image_check &checked) {
+    int num_frozen = 0;
 
     for (int row = 0; row < (int) to_transform.size(); ++row) {
         for (int col = 0; col < (int) to_transform[0].size(); ++col) {
-            if (to_transform[row][col]) {
+            if (!to_transform[row][col]) {
                 checked[row][col] = true;
-                new_transform[row][col] = 0;
-                heap_element current = heap_element (row, col, 0);
-                update_neighbors(queue, current, checked);
+                num_frozen++;
+                update_neighbors(queue, heap_element(row, col), checked);
             }
         }
     }
+
+    return num_frozen;
 }
 
 void distance_transform::update_neighbors (priority_queue &queue, heap_element curr, image_check &checked) {
@@ -342,9 +349,8 @@ void distance_transform::update_4_more (priority_queue &queue, heap_element curr
 
 void distance_transform::fmm_distance (heap_element curr, int x, int y, priority_queue &queue, image_check &checked) {
     int h = checked.size(), w = checked[0].size();
-    if (x >= 0 && y >= 0 && x < h && y < w && !checked[x][y]) {
+    if (x >= 0 && y >= 0 && x < h && y < w && !checked[x][y] && fmm_to_transform[x][y]) {
         float distance = curr.distance + sqrt ((curr.x_pos-x)*(curr.x_pos-x)+(curr.y_pos-y)*(curr.y_pos-y));
-        heap_element new_element = heap_element (x, y, distance);
-        queue.push(new_element);
+        queue.push(heap_element (x, y, distance));
     }
 }

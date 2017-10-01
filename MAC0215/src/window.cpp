@@ -56,8 +56,15 @@ QGroupBox* Window::createParameterSliders() {
   controllersLayout->addWidget(textureSizeLabel, currentRow, 0);
   controllersLayout->addWidget(textureSizeSlider, currentRow, 1);
   textureSizeSlider->setValue(5);
-  glWidget->albedo = albedo_factor * 0.5;
   connect(textureSizeSlider, SIGNAL(valueChanged(int)), this, SLOT(valueAD(int)));
+  currentRow++;
+
+  textureResolutionSlider = createSlider(0, 10);
+  textureResolutionLabel = new QLabel(tr("Atlas resolution:"));
+  controllersLayout->addWidget(textureResolutionLabel, currentRow, 0);
+  controllersLayout->addWidget(textureResolutionSlider, currentRow, 1);
+  textureResolutionSlider->setValue(5);
+  connect(textureResolutionSlider, SIGNAL(valueChanged(int)), this, SLOT(valueAR(int)));
   currentRow++;
 
   controllersGroup->setLayout(controllersLayout);
@@ -161,6 +168,10 @@ void Window::valueGa(int nv) {
 void Window::valueAD (int nv) {
     if (!nv) nv++;
     glWidget->set_atlas_dimension_value (atlas_factor * nv);
+}
+void Window::valueAR (int nv) {
+    if (!nv) nv++;
+    glWidget->set_atlas_resolution_value (resolution_factor * nv);
 }
 
 // Bake type button controller

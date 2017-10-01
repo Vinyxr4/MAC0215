@@ -39,6 +39,7 @@ public:
     void set_trivial_type (QString new_trivial_type);
     void set_gamma_value (float new_value);
     void set_atlas_dimension_value (float new_value);
+    void set_atlas_resolution_value (float new_value);
 
     float albedo, last_albedo;
     bool changed = false;
@@ -103,6 +104,7 @@ private:
 
     float gamma_value = 0.05;
     float atlas_dimension_value = 0.5;
+    float atlas_resolution_value = 0.5;
 
     QMetaObject::Connection m_connection;
 

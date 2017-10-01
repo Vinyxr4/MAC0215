@@ -33,6 +33,7 @@ private slots:
     void valueAl(int);
     void valueGa(int);
     void valueAD(int);
+    void valueAR(int);
     void trivialTexSlot ();
     void trivialMipSlot ();
     void distanceCityBlockSlot ();
@@ -47,7 +48,7 @@ private:
 
     float albedo_factor = 100.0;
     float gamma_factor = 0.01;
-    float atlas_factor = 0.1;
+    float atlas_factor = 0.1, resolution_factor = 0.1;
 
     MainWindow *mainWindow;
     int step_;
@@ -61,12 +62,12 @@ private:
 
     // Sliders
     QSlider *albedoSlider;
-    QSlider *textureSizeSlider;
+    QSlider *textureSizeSlider, *textureResolutionSlider;
     QSlider *gammaSlider;
 
     // Labels
     QLabel *albedoLabel;
-    QLabel *textureSizeLabel;
+    QLabel *textureSizeLabel, *textureResolutionLabel;
     QLabel *gammaLabel;
 
     QGroupBox* createParameterSliders();
