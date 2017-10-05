@@ -11,18 +11,26 @@ distance_transform::distance_transform (image new_image, int new_height, int new
     metric = "trivial";
 
     //qDebug() << "oi";
-    /*
-    image test;
-    for (int i = 0; i < 5; ++i) {
-        image_line line;
-        for (int j = 0; j < 5; ++j)
-            line.push_back(1);
-        test.push_back(line);
+
+
+    min_heap minheap (25);
+
+    for (int i = 0; i < 5; ++i)
+        for (int j = 0; j < 5; ++j) {
+            minheap.push (heap_element (i, j, sqrt(i*i+j*j), i*5+j));
+        }
+
+    minheap.show_heap();
+
+    while (!minheap.empty()) {
+        heap_element aux = minheap.top ();
+        qDebug () << aux.x_pos << aux.y_pos << aux.distance;
+
+        minheap.pop ();
     }
 
-    test[0][0] = 0;
-    image test_transf = fmm (test, 5, 5);
-    */
+    //image test_transf = fmm (test, 5, 5);
+
 }
 
 /*** Public methods ***/
@@ -319,7 +327,7 @@ int distance_transform::initialize_fmm (image to_transform, priority_queue &queu
             if (!to_transform[row][col]) {
                 checked[row][col] = true;
                 num_frozen++;
-                update_neighbors(queue, heap_element(row, col), checked);
+                update_neighbors(queue, heap_element(row, col,0), checked);
             }
         }
     }
