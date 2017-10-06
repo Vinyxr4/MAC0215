@@ -12,7 +12,7 @@ distance_transform::distance_transform (image new_image, int new_height, int new
 
     //qDebug() << "oi";
 
-
+    /*
     min_heap minheap (25);
 
     for (int i = 0; i < 5; ++i)
@@ -20,14 +20,13 @@ distance_transform::distance_transform (image new_image, int new_height, int new
             minheap.push (heap_element (i, j, sqrt(i*i+j*j), i*5+j));
         }
 
-    minheap.show_heap();
+    //minheap.show_heap();
 
     while (!minheap.empty()) {
         heap_element aux = minheap.top ();
         qDebug () << aux.x_pos << aux.y_pos << aux.distance;
-
         minheap.pop ();
-    }
+    }*/
 
     //image test_transf = fmm (test, 5, 5);
 
@@ -291,9 +290,8 @@ image distance_transform::fmm (image to_transform, int h, int w) {
     fmm_to_transform = to_transform;
 
     int num_frozen = initialize_fmm (to_transform, fmm_queue, marked);
-    int num_cells = h*w;
     //qDebug() << "ok";
-    while (num_cells > num_frozen && !fmm_queue.empty()) {
+    while (!fmm_queue.empty()) {
         heap_element dequed = fmm_queue.top();
         fmm_queue.pop ();
         int x = dequed.x_pos, y = dequed.y_pos;
@@ -359,6 +357,6 @@ void distance_transform::fmm_distance (heap_element curr, int x, int y, priority
     int h = checked.size(), w = checked[0].size();
     if (x >= 0 && y >= 0 && x < h && y < w && !checked[x][y] && fmm_to_transform[x][y]) {
         float distance = curr.distance + sqrt ((curr.x_pos-x)*(curr.x_pos-x)+(curr.y_pos-y)*(curr.y_pos-y));
-        queue.push(heap_element (x, y, distance));
+        queue.push(heap_element (x, y, distance, x*h+y));
     }
 }

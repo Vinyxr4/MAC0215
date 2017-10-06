@@ -100,6 +100,7 @@ void text::define_text_from_pdf (QString pdf_path) {
 
     QString highlowers = "bdfhijklt";
     QString pontuation = ",.;";
+    QString lower_letters = "qpg";
 
     std::vector<QVector3D> txt_vertices;
     int i, j;
@@ -111,6 +112,8 @@ void text::define_text_from_pdf (QString pdf_path) {
             low_y_scale = 0.7;
         if (pontuation.contains(txt[i]))
             low_y_scale = 0.3;
+        if (lower_letters.contains(txt[i]))
+            low_y_scale = 1;
         txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 1], 0)*scale);
         txt_vertices.push_back (QVector3D (bbox[j] +  (bbox[j + 2] - bbox[j]) * low_x_scale, bbox[j + 1], 0)*scale);
         txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 1] + (bbox[j + 3] - bbox[j + 1]) * low_y_scale, 0)*scale);

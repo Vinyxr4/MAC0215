@@ -53,10 +53,10 @@ void min_heap::pop () {
     heap_element last_element = heap[last--];
     element_index[last_element.key] = 0;
     if (!empty()) {
-    element_index[heap[0].key] = -1;
-    is_present[heap[0].key] = false;
-    heap[0] = last_element;
-    update (0);
+        element_index[heap[0].key] = -1;
+        is_present[heap[0].key] = false;
+        heap[0] = last_element;
+        dive (0);
     }
 }
 
@@ -101,6 +101,7 @@ void min_heap::dive (int index) {
             heap[child] = heap[parent];
             element_index[heap[parent].key] =  element_index[temp.key];
             heap[parent] = temp;
+            parent = child;
         }
         else break;
     }
