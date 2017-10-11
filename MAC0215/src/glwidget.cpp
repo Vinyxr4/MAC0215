@@ -63,6 +63,45 @@ void GLWidget::loadTexture (QString file) {
     initTex (url);
 }
 
+void GLWidget::reload_shader (QString type) {
+    QString vertex_shader;
+    QString fragment_shader;
+    QString geometry_shader;
+
+    if (m_program != NULL)
+        delete m_program;
+    m_program = new QOpenGLShaderProgram();
+
+    if (type == "curve outline") {
+        vertex_shader = ":/shaders/curve.vert";
+        fragment_shader = ":/shaders/curve.frag";
+        geometry_shader = ":/shaders/to_bez.geom";
+
+        g_shader = new QOpenGLShader(QOpenGLShader::Geometry);
+        if (!g_shader->compileSourceFile(geometry_shader))
+            qWarning() << m_program->log();
+        m_program->addShader(g_shader);
+    }
+    else {
+        vertex_shader = ":/shaders/texture.vert";
+        fragment_shader = ":/shaders/texture.frag";
+    }
+
+    m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, vertex_shader);
+    shader = new QOpenGLShader(QOpenGLShader::Fragment);
+    shader->compileSourceFile(fragment_shader);
+    m_program->addShader(shader);
+
+    m_program->link();
+    m_program->bind();
+    u_modelToWorld = m_program->uniformLocation("modelToWorld");
+    u_worldToCamera = m_program->uniformLocation("worldToCamera");
+    u_cameraToView = m_program->uniformLocation("cameraToView");
+    u_gamma = m_program->uniformLocation ("gamma");
+    m_texAttr = m_program->attributeLocation("texCoord");
+    m_program->release();
+}
+
 void GLWidget::set_render_mode (int layers) {
     m_program->bind();
     disconnectUpdate ();
@@ -78,13 +117,21 @@ void GLWidget::set_render_mode (int layers) {
         else if (bake_type == "texture distance transform") {
             Text->bake_dist_transf (transform_type);
         }
-        Text->gen_test_pdf ();
-        loadTexture (atlas);
+
+        if (bake_type != "curve outline") {
+            Text->gen_test_pdf ("texture");
+            loadTexture (atlas);
+            if (trivial_type == "texture mip" && bake_type == "trivial")
+                texture->generateMipMaps();
+        }
+        else {
+            Text->gen_test_pdf ("curve outline");
+        }
+
+        reload_shader(bake_type);
         LoadText (layers);
-        if (trivial_type == "texture mip" && bake_type == "trivial")
-            texture->generateMipMaps();
+        change_render = false;
     }
-    change_render = false;
     connectUpdate ();
     m_program->release();
 }
@@ -93,10 +140,11 @@ void GLWidget::LoadText (int layers) {
     QVector3D *font_vertex = (QVector3D*) malloc (Text->font_vertices.size () * sizeof (QVector3D));
     QVector2D *font_tex = (QVector2D*) malloc (Text->font_texture.size () * sizeof (QVector2D));
 
-    for (uint i = 0; i < Text->font_vertices.size (); ++i) {
+
+    for (uint i = 0; i < Text->font_vertices.size (); ++i)
         font_vertex[i] = Text->font_vertices[i];
+    for (uint i = 0; i < Text->font_texture.size (); ++i)
         font_tex[i] = Text->font_texture[i];
-    }
 
     m_object.bind();
     m_vertex.bind();
@@ -106,6 +154,8 @@ void GLWidget::LoadText (int layers) {
     sg_vertexes_ = font_vertex;
     vertexCount_ = Text->font_vertices.size ();
     m_vertex.allocate(sg_vertexes_, vertexCount_ * sizeof (QVector3D));
+
+
 
     m_object.release();
     m_vertex.release();
@@ -169,10 +219,16 @@ void GLWidget::initializeGL() {
   {
     // Create Shader (Do not release until VAO is created)
     m_program = new QOpenGLShaderProgram();
-    m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/texture.vert");
+    m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/curve.vert");
     shader = new QOpenGLShader(QOpenGLShader::Fragment);
-    shader->compileSourceFile(":/shaders/texture.frag");
+    shader->compileSourceFile(":/shaders/curve.frag");
     m_program->addShader(shader);
+
+    g_shader = new QOpenGLShader(QOpenGLShader::Geometry);
+    if (!g_shader->compileSourceFile(":/shaders/to_bez.geom"))
+        qWarning() << m_program->log();
+    m_program->addShader(g_shader);
+
     m_program->link();
     m_program->bind();
 
@@ -211,6 +267,7 @@ void GLWidget::initializeGL() {
 
     last_albedo = albedo;
   }
+
 }
 
 void GLWidget::update() {

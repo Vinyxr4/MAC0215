@@ -31,10 +31,11 @@ public:
     // Returns glyph width
     int get_width ();
 
+    std::vector<QVector3D> curve_points;
+
 private:
     int height, width, x_offset, y_offset;
     char rep;
-    std::vector<QVector3D> curve_points;
 };
 
 #endif // GLYPH_H

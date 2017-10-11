@@ -125,7 +125,7 @@ QGroupBox* Window::createBakeTypeBoxes() {
   distance_chess_board = new QPushButton ("Chessboard", this);
   distance_euclidean = new QPushButton ("Euclidean", this);
   distance_fmm = new QPushButton ("Fast Marching", this);
-  curve = new QPushButton ("Curve", this);
+  curve = new QPushButton ("Curve Outline", this);
 
   trivialLayout->addWidget(trivial_texture);
   trivialLayout->addWidget(trivial_mip);
@@ -146,7 +146,7 @@ QGroupBox* Window::createBakeTypeBoxes() {
   bakeLayout->addWidget(distanceGroup);
 
   curveLayout->addWidget(curve);
-  connect(curve, SIGNAL(clicked()), this, SLOT(curveSlot()));
+  connect(curve, SIGNAL(clicked()), this, SLOT(curveOutlineSlot()));
   curveGroup->setLayout(curveLayout);
   bakeLayout->addWidget(curveGroup);
 
@@ -203,6 +203,10 @@ void Window::distanceEuclideanSlot () {
 void Window::distanceFMMSlot () {
    glWidget->set_bake_type ("texture distance transform");
    glWidget->set_transform_type ("fast marching");
+}
+
+void Window::curveOutlineSlot () {
+   glWidget->set_bake_type ("curve outline");
 }
 
 void Window::curveSlot () {

@@ -40,6 +40,7 @@ private slots:
     void distanceEuclideanSlot ();
     void distanceChessBoardSlot ();
     void distanceFMMSlot ();
+    void curveOutlineSlot ();
     void curveSlot ();
 
 private:

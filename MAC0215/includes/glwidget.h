@@ -40,14 +40,15 @@ public:
     void set_gamma_value (float new_value);
     void set_atlas_dimension_value (float new_value);
     void set_atlas_resolution_value (float new_value);
+    void reload_shader (QString type);
 
     float albedo, last_albedo;
     bool changed = false;
     bool change_render = false;
     text *Text;
 
-    QOpenGLShaderProgram *m_program;
-    QOpenGLShader *shader;
+    QOpenGLShaderProgram *m_program = NULL;
+    QOpenGLShader *shader, *g_shader;
 
 public slots:
     void cleanup();

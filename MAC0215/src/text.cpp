@@ -86,7 +86,28 @@ void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
     }
 }
 
-void text::define_text_from_pdf (QString pdf_path) {
+void text::define_text_curve (QString t, std::vector<QVector3D> quad_vertices) {
+    text_to_render = QString (t);
+
+    set_layer (0);
+
+    font_vertices.clear();
+
+    int i = 0;
+    for (QChar *c = text_to_render.begin(); c != text_to_render.end(); ++c, i += 4) {
+        glyph g = glyph_set[layer][c->unicode()];
+        //int tam = g.curve_points.size();
+        float height = (quad_vertices[i+2].y()-quad_vertices[i].y())/(1.0 * g.get_height ());
+        float width = (quad_vertices[i+1].x()-quad_vertices[i].x())/(1.0 * g.get_width ());
+        for (int j = 0; j < g.curve_points.size(); j++) {
+            QVector3D aux = QVector3D (g.curve_points[j].x()*width,g.curve_points[j].y()*height,g.curve_points[j].z());
+            font_vertices.push_back(quad_vertices[i]+aux);
+
+        }
+    }
+}
+
+void text::define_text_from_pdf (QString pdf_path, QString render) {
     pdf_extractor *extractor = new pdf_extractor (pdf_path.toStdString(), code_path.toStdString());
     QString txt;
     double *bbox;
@@ -105,7 +126,7 @@ void text::define_text_from_pdf (QString pdf_path) {
     std::vector<QVector3D> txt_vertices;
     int i, j;
     for (i = 0, j = 0; i < txt.size(); ++i, j += 4) {
-        float scale = 0.5;
+        float scale = 0.4;
         float low_y_scale = 1;
         float low_x_scale = 1;
         if (txt[i].isLower() && !highlowers.contains(txt[i], Qt::CaseSensitive))
@@ -120,7 +141,11 @@ void text::define_text_from_pdf (QString pdf_path) {
         txt_vertices.push_back (QVector3D (bbox[j] +  (bbox[j + 2] - bbox[j]) * low_x_scale, bbox[j + 1] + (bbox[j + 3] - bbox[j + 1]) * low_y_scale, 0)*scale);
     }
 
-    define_text (txt, txt_vertices);
+    if (render == "curve outline")
+        define_text_curve (txt, txt_vertices);
+    else
+        define_text (txt, txt_vertices);
+
 }
 
 void text::set_layer (int l) {
@@ -154,9 +179,9 @@ void text::gen_test () {
     define_text(test_string, vec);
 }
 
-void text::gen_test_pdf () {
+void text::gen_test_pdf (QString render) {
     QString example_path = pdf_test_path + "Lorem-Ipsum.pdf";
-    define_text_from_pdf (example_path);
+    define_text_from_pdf (example_path, render);
 }
 
 /*** Private methods ***/
@@ -264,6 +289,7 @@ std::vector<QVector3D> text::create_control_points (font_points outline) {
             first = outline.contours[i], second = curr_contour, third = second+1;
         }
         for (int j = curr_contour; j <= outline.contours[i];) {
+            if (second > outline.contours[i]) second = curr_contour;
             if (third > outline.contours[i]) third = curr_contour;
             if (is_on_point (outline, first)) {
                 if (!is_on_point (outline, second) && is_on_point (outline, third)) {
@@ -318,6 +344,7 @@ std::vector<QVector3D> text::create_control_points (font_points outline) {
         curr_contour = outline.contours[i]+1;
     }
 
+    //qDebug() << control_points;
     return control_points;
 }
 

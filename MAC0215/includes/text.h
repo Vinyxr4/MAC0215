@@ -30,16 +30,18 @@ public:
     void bake_dist_transf (QString metric);
 
     // Defines the text to be rendered from a pdf text
-    void define_text_from_pdf (QString pdf_path);
+    void define_text_from_pdf (QString pdf_path, QString render);
 
     // Defines the text to be rendered from a Qstring t, on the quad_vertices
     void define_text (QString t, std::vector<QVector3D> quad_vertices);
+
+    void define_text_curve (QString t, std::vector<QVector3D> quad_vertices);
 
     // Generates a simple test
     void gen_test ();
 
     // Generates a test using a pdf file
-    void gen_test_pdf ();
+    void gen_test_pdf (QString render);
 
     // Set the number of layers
     void set_layer (int l);
