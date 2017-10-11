@@ -1,11 +1,12 @@
 #include "glyph.h"
 
-glyph::glyph (int x, int y, int h, int w, char c) {
+glyph::glyph (int x, int y, int h, int w, char c, std::vector<QVector3D> c_points) {
     x_offset = x;
     y_offset = y;
     height = h;
     width = w;
     rep = c;
+    curve_points = std::vector<QVector3D> (c_points);
 }
 
 char glyph::get_char () {

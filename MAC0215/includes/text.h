@@ -50,6 +50,8 @@ public:
     void set_atlas_dimension_value (float new_value);
     void set_atlas_resolution_value (float new_value);
 
+    void font_description ();
+
     std::vector<QVector3D> font_vertices;
     std::vector<QVector2D> font_texture;
 
@@ -76,6 +78,9 @@ private:
     image construct_image (FT_Bitmap *bmp);
 
     void do_transform (distance_transform &transform);
+
+    font_points get_curve (FT_Outline_ glyph_outline);
+    std::vector<QVector3D> create_control_points (font_points outline);
 };
 
 #endif // TEXT_H

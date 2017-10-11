@@ -1,13 +1,20 @@
 #ifndef GLYPH_H
 #define GLYPH_H
 
+#include <vector>
+#include <ft2build.h>
+#include <QVector3D>
+#include FT_FREETYPE_H
+
 // This class represents a glyph, with x and y offsets on it's
 // containing atlas,wich char it represents and height and width.
+
+typedef FT_Outline font_points;
 
 class glyph {
 public:
     // Glyph constructor: recieves lower left position, height, width and char representation
-    glyph (int x, int y, int h, int w, char c);
+    glyph (int x, int y, int h, int w, char c, std::vector<QVector3D> c_points);
 
     // Returns char represented by the glyph
     char get_char ();
@@ -27,6 +34,7 @@ public:
 private:
     int height, width, x_offset, y_offset;
     char rep;
+    std::vector<QVector3D> curve_points;
 };
 
 #endif // GLYPH_H

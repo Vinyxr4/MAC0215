@@ -173,12 +173,9 @@ void text::bake (int max_resolution, int max_size) {
 
     int GLYPH_HEIGHT = max_size;
     int DPI = atlas_resolution * max_resolution;
-    int padding = 5;
+    int padding = 10;
 
     std::locale loc("en_US.UTF-8");
-    /*if (bake_type.indexOf("distance transform") > -1)
-        FT_Set_Char_Size (face, 0, GLYPH_HEIGHT, DPI/2, DPI/2);
-    else*/
     FT_Set_Char_Size (face, 0, GLYPH_HEIGHT, DPI, DPI);
     int num_glyphs = face->num_glyphs;
 
@@ -194,6 +191,8 @@ void text::bake (int max_resolution, int max_size) {
     int x, y;
     int last_x = 0, last_y = 0;
 
+
+
     glyph_set.clear();
     QImage texture (texture_width, texture_height, QImage::Format_RGB32);
     for (int l = 0; l < 1; ++l) {
@@ -202,8 +201,13 @@ void text::bake (int max_resolution, int max_size) {
         for (int i = 0; i < num_glyphs; ++i) {
             FT_Load_Char (face, i, FT_LOAD_RENDER | FT_LOAD_TARGET_LIGHT);
             FT_Bitmap *bmp = &face->glyph->bitmap;
+            font_points outline;
+            std::vector<QVector3D> test;
             if (std::isprint((wchar_t) i, loc)) {
                 image img;
+                outline = get_curve(face->glyph->outline);
+
+                test = create_control_points(outline);
 
                 if (x + bmp->width >= texture_width)
                     x = 0, y += (padding + (face->size->metrics.height >> 6));
@@ -213,12 +217,13 @@ void text::bake (int max_resolution, int max_size) {
                 do_transform (transform);
 
                 prepare_texture (transform, texture, x, y);
-                set.push_back (glyph (x, y, bmp->rows, bmp->width, i));
+                set.push_back (glyph (x, y, bmp->rows, bmp->width, i, test));
 
                 x +=  padding + bmp->width;
+
             }
             else
-                set.push_back (glyph (0, 0, 0, 0, i));
+                set.push_back (glyph (0, 0, 0, 0, i, test));
         }
         glyph_set.push_back(set);
         if ((l+1) % 2)
@@ -234,6 +239,86 @@ void text::bake (int max_resolution, int max_size) {
     QImage test = texture.scaled(atlas_dimension * texture.height(), atlas_dimension * texture.width(),Qt::KeepAspectRatio);
     test.save(atlas_path, Q_NULLPTR, 50);
     FT_Done_FreeType(ft);
+}
+
+font_points text::get_curve (FT_Outline_ glyph_outline) {
+    font_points curve = font_points(glyph_outline);
+    return curve;
+}
+
+
+bool is_on_point (font_points outline, int pos) {
+    return outline.tags[pos]%2 == 1;
+}
+
+
+
+std::vector<QVector3D> text::create_control_points (font_points outline) {
+    std::vector<QVector3D> control_points, not_valid;
+
+    int curr_contour = 0;
+    for (int i = 0; i < outline.n_contours; ++i) {
+
+        int first = curr_contour, second = first+1, third = second+1;
+        if (!is_on_point(outline, first)) {
+            first = outline.contours[i], second = curr_contour, third = second+1;
+        }
+        for (int j = curr_contour; j <= outline.contours[i];) {
+            if (third > outline.contours[i]) third = curr_contour;
+            if (is_on_point (outline, first)) {
+                if (!is_on_point (outline, second) && is_on_point (outline, third)) {
+                    QVector3D aux = QVector3D (outline.points[first].x>>6, outline.points[first].y>>6, 0);
+                    control_points.push_back(aux);
+                    aux = QVector3D (outline.points[second].x>>6, outline.points[second].y>>6, 0);
+                    control_points.push_back(aux);
+                    aux = QVector3D (outline.points[third].x>>6, outline.points[third].y>>6, 0);
+                    control_points.push_back(aux);
+                    j += 2;
+                    first +=2, second = first+1, third=second+1;
+                }
+                else if (is_on_point (outline, second)) {
+                    FT_Vector_ p_0 = outline.points[first];
+                    FT_Vector_ p_1 = outline.points[second];
+
+                    QVector3D aux = QVector3D (p_0.x>>6, p_0.y>>6, 0);
+                    control_points.push_back(aux);
+                    aux = QVector3D ((p_0.x>>6) + (p_1.x>>6), (p_0.y>>6) + (p_1.y>>6), 0) * 0.5;
+                    control_points.push_back(aux);
+                    aux = QVector3D (p_1.x>>6, p_1.y>>6, 0);
+                    control_points.push_back(aux);
+                    j += 1;
+                    first +=1, second = first+1, third=second+1;
+                }
+                else if (!is_on_point (outline, third)) {
+                    FT_Vector_ p_0 = outline.points[first];
+                    FT_Vector_ p_1 = outline.points[second];
+                    FT_Vector_ p_2 = outline.points[third];
+                    FT_Vector_ p_3 = outline.points[third+1];
+                    if (third + 1 > outline.contours[i])
+                        p_3 = outline.points[curr_contour];
+
+                    QVector3D aux = QVector3D (p_0.x>>6, p_0.y>>6, 0);
+                    control_points.push_back(aux);
+                    aux = QVector3D (p_1.x>>6, p_1.y>>6, 0);
+                    control_points.push_back(aux);
+                    aux = QVector3D ((p_1.x>>6) + (p_2.x>>6), (p_1.y>>6) + (p_2.y>>6), 0) * 0.5;
+                    control_points.push_back(aux);
+                    control_points.push_back(aux);
+                    aux = QVector3D (p_2.x>>6, p_2.y>>6, 0);
+                    control_points.push_back(aux);
+                    aux = QVector3D (p_3.x>>6, p_3.y>>6, 0);
+                    control_points.push_back(aux);
+
+                    j += 3;
+                    first +=3, second = first+1, third=second+1;
+                }
+            }
+            else return not_valid;
+        }
+        curr_contour = outline.contours[i]+1;
+    }
+
+    return control_points;
 }
 
 void text::do_transform (distance_transform &transform) {
