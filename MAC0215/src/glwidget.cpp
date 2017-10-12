@@ -82,6 +82,10 @@ void GLWidget::reload_shader (QString type) {
             qWarning() << m_program->log();
         m_program->addShader(g_shader);
     }
+    else if (type == "curve blinn-loop") {
+        vertex_shader = ":/shaders/curve_blinn.vert";
+        fragment_shader = ":/shaders/curve_blinn.frag";
+    }
     else {
         vertex_shader = ":/shaders/texture.vert";
         fragment_shader = ":/shaders/texture.frag";
@@ -118,7 +122,7 @@ void GLWidget::set_render_mode (int layers) {
             Text->bake_dist_transf (transform_type);
         }
 
-        if (bake_type != "curve outline") {
+        if (!bake_type.contains("curve")) {
             Text->gen_test_pdf ("texture");
             loadTexture (atlas);
             if (trivial_type == "texture mip" && bake_type == "trivial")
@@ -138,13 +142,36 @@ void GLWidget::set_render_mode (int layers) {
 
 void GLWidget::LoadText (int layers) {
     QVector3D *font_vertex = (QVector3D*) malloc (Text->font_vertices.size () * sizeof (QVector3D));
-    QVector2D *font_tex = (QVector2D*) malloc (Text->font_texture.size () * sizeof (QVector2D));
+    QVector2D *font_tex;
 
+    if (bake_type != "curve blinn-loop") {
+        font_true_vertex = (QVector3D*) malloc (Text->font_vertices.size () * sizeof (QVector3D));
+        for (uint i = 0; i < Text->font_vertices.size (); ++i)
+            font_true_vertex[i] = Text->font_vertices[i];
+        font_vertex = font_true_vertex;
+    }
+    else {
+        font_triangulated = (QVector3D*) malloc (Text->font_vertices.size () * sizeof (QVector3D));
+        std::vector<QVector3D> aux = Text->triangles_from_curve();
+        for (uint i = 0; i < Text->font_vertices.size (); ++i)
+            font_triangulated[i] = aux[i];
+        font_vertex = font_triangulated;
 
-    for (uint i = 0; i < Text->font_vertices.size (); ++i)
-        font_vertex[i] = Text->font_vertices[i];
-    for (uint i = 0; i < Text->font_texture.size (); ++i)
-        font_tex[i] = Text->font_texture[i];
+    }
+
+    if (!bake_type.contains("curve")) {
+        font_tex = (QVector2D*) malloc (Text->font_texture.size () * sizeof (QVector2D));
+        for (uint i = 0; i < Text->font_texture.size (); ++i)
+            font_tex[i] = Text->font_texture[i];
+    }
+    else {
+        font_tex = (QVector2D*) malloc (Text->font_vertices.size () * sizeof (QVector2D));
+        for (uint i = 0; i < Text->font_vertices.size (); ++i) {
+            font_tex[i++] = QVector2D(0.0f,0.0f);
+            font_tex[i++] = QVector2D(0.5f,0.0f);
+            font_tex[i] = QVector2D(1.0f,1.0f);
+        }
+    }
 
     m_object.bind();
     m_vertex.bind();
@@ -208,6 +235,7 @@ void GLWidget::initializeGL() {
   printContextInformation();
   // Set global information
   glEnable(GL_DEPTH_TEST);
+
   glDepthRange(0,1);
   glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 
@@ -306,11 +334,43 @@ void GLWidget::paintGL() {
   m_program->setUniformValue("texture", 0);
   {
     glEnable(GL_BLEND);
+
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_ONE, GL_ONE);
+
+    glClearStencil(0);
+    if (bake_type == "curve blinn-loop") {
+        glEnable(GL_STENCIL_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glStencilOp(GL_INVERT, GL_INVERT, GL_INVERT);
+        glStencilFunc(GL_ALWAYS, 1, 1);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    }
+
     m_object.bind();
     m_program->setUniformValue(u_modelToWorld, m_transform.toMatrix());
     texture->bind();
     glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
+
+    if (bake_type == "curve blinn-loop") {
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glStencilFunc(GL_EQUAL, 1, 1);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
+        glDisable(GL_STENCIL_TEST);
+
+        /*m_vertex.bind();
+        sg_vertexes_ = font_true_vertex;
+        m_vertex.allocate(sg_vertexes_, vertexCount_ * sizeof (QVector3D));
+        m_vertex.release();
+        glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
+        m_vertex.bind();
+        sg_vertexes_ = font_triangulated;
+        m_vertex.allocate(sg_vertexes_, vertexCount_ * sizeof (QVector3D));
+        m_vertex.release();*/
+    }
+
     m_object.release();
   }
   m_program->release();

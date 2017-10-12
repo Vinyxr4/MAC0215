@@ -126,6 +126,7 @@ QGroupBox* Window::createBakeTypeBoxes() {
   distance_euclidean = new QPushButton ("Euclidean", this);
   distance_fmm = new QPushButton ("Fast Marching", this);
   curve = new QPushButton ("Curve Outline", this);
+  curve_blinn = new QPushButton ("Blinn-Loop", this);
 
   trivialLayout->addWidget(trivial_texture);
   trivialLayout->addWidget(trivial_mip);
@@ -146,7 +147,9 @@ QGroupBox* Window::createBakeTypeBoxes() {
   bakeLayout->addWidget(distanceGroup);
 
   curveLayout->addWidget(curve);
+  curveLayout->addWidget(curve_blinn);
   connect(curve, SIGNAL(clicked()), this, SLOT(curveOutlineSlot()));
+  connect(curve_blinn, SIGNAL(clicked()), this, SLOT(curveBlinnSlot()));
   curveGroup->setLayout(curveLayout);
   bakeLayout->addWidget(curveGroup);
 
@@ -207,6 +210,9 @@ void Window::distanceFMMSlot () {
 
 void Window::curveOutlineSlot () {
    glWidget->set_bake_type ("curve outline");
+}
+void Window::curveBlinnSlot () {
+   glWidget->set_bake_type ("curve blinn-loop");
 }
 
 void Window::curveSlot () {

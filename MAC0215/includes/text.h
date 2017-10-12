@@ -41,7 +41,7 @@ public:
     void gen_test ();
 
     // Generates a test using a pdf file
-    void gen_test_pdf (QString render);
+    void gen_test_pdf (QString render );
 
     // Set the number of layers
     void set_layer (int l);
@@ -51,6 +51,7 @@ public:
 
     void set_atlas_dimension_value (float new_value);
     void set_atlas_resolution_value (float new_value);
+    std::vector<QVector3D> triangles_from_curve ();
 
     void font_description ();
 

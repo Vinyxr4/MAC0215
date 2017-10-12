@@ -34,4 +34,5 @@ LIBS += -lz -lfreetype -lpython2.7
 INCLUDEPATH += /usr/include/freetype2 /usr/include/python2.7 includes/
 
 RESOURCES += resource.qrc
-DISTFILES += shaders/texture.vert shaders/texture.vert shaders/to_bez.geom shaders/curve.vert shaders/curve.vert
+DISTFILES += shaders/texture.vert shaders/texture.vert shaders/to_bez.geom shaders/curve.vert shaders/curve.vert \
+             shaders/curve_blinn.vert shaders/curve_blinn.vert

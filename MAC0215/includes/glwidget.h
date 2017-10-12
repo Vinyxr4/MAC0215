@@ -107,6 +107,9 @@ private:
     float atlas_dimension_value = 0.5;
     float atlas_resolution_value = 0.5;
 
+    QVector3D *font_true_vertex;
+    QVector3D *font_triangulated;
+
     QMetaObject::Connection m_connection;
 
 };

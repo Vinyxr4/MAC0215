@@ -4,6 +4,8 @@
         <file>shaders/texture.vert</file>
         <file>shaders/curve.frag</file>
         <file>shaders/curve.vert</file>
+        <file>shaders/curve_blinn.frag</file>
+        <file>shaders/curve_blinn.vert</file>
         <file>shaders/to_bez.geom</file>
         <file>pdf/lista_1.pdf</file>
     </qresource>

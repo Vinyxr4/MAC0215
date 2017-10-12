@@ -126,7 +126,7 @@ void text::define_text_from_pdf (QString pdf_path, QString render) {
     std::vector<QVector3D> txt_vertices;
     int i, j;
     for (i = 0, j = 0; i < txt.size(); ++i, j += 4) {
-        float scale = 0.4;
+        float scale = 0.5;
         float low_y_scale = 1;
         float low_x_scale = 1;
         if (txt[i].isLower() && !highlowers.contains(txt[i], Qt::CaseSensitive))
@@ -346,6 +346,19 @@ std::vector<QVector3D> text::create_control_points (font_points outline) {
 
     //qDebug() << control_points;
     return control_points;
+}
+
+std::vector<QVector3D> text::triangles_from_curve () {
+    QVector3D fix_point = QVector3D (-10,0,0);
+
+    std::vector<QVector3D> triangles;
+    for (int i = 0; i < font_vertices.size(); i += 3) {
+        triangles.push_back(font_vertices[i]);
+        triangles.push_back(fix_point);
+        triangles.push_back(font_vertices[i+2]);
+    }
+
+    return triangles;
 }
 
 void text::do_transform (distance_transform &transform) {
