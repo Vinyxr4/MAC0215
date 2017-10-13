@@ -14,8 +14,5 @@ void main(void) {
     if (pass == 2 && test > 0)
         discard;
 
-    //float alpha = smoothstep (0.5 - gamma, 0.5 + gamma, t.r);
-
-    //gl_FragColor = vec4(1, 1, 1 , alpha) * color;
     fcolor = color;
 }

@@ -355,10 +355,15 @@ void GLWidget::paintGL() {
 
         write_from_stencil();
         set_outline_vertices(FIRST);
+        glEnable(GL_MULTISAMPLE);
+        glEnable(GL_POLYGON_SMOOTH);
         glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
 
         set_filling_vertices();
         glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
+        glDisable(GL_POLYGON_SMOOTH);
+        glDisable(GL_MULTISAMPLE);
+        glEnable(GL_DEPTH_TEST);
         glDisable(GL_STENCIL_TEST);
     }
     m_object.release();
@@ -376,7 +381,7 @@ void GLWidget::prepare_stencil () {
 
 void GLWidget::write_from_stencil () {
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
     glStencilFunc(GL_EQUAL, 1, 1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 }

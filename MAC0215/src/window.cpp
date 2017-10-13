@@ -14,7 +14,9 @@
 
 Window::Window(MainWindow *mw, int step, int shininess)
     : mainWindow(mw), step_(step), shininess_(shininess) {
-  glWidget = new GLWidget(step);
+
+    glWidget = new GLWidget(step);
+    //glWidget->setFormat(QSurfaceFormat::samples());
 
   QGroupBox *controllersGroup = createParameterSliders();
 
