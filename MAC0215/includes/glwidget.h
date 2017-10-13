@@ -19,6 +19,9 @@ QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 #include "transform3d.h"
 #include "text.h"
 
+#define FIRST 1
+#define SECOND 2
+
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
@@ -84,6 +87,7 @@ private:
     int u_cameraToView;
     int u_worldToCamera;
     int u_gamma;
+    int u_pass;
 
     Camera3D m_camera;
     QMatrix4x4 m_projection;
@@ -93,6 +97,7 @@ private:
     int indiceSize_;
     int vertexCount_;
     int m_texAttr;
+    int pass_value = FIRST;
     GLuint* indices_;
     QVector3D* sg_vertexes_ = NULL;
     QVector3D *vertices;
@@ -112,6 +117,10 @@ private:
 
     QMetaObject::Connection m_connection;
 
+    void prepare_stencil ();
+    void write_from_stencil ();
+    void set_filling_vertices ();
+    void set_outline_vertices (int look_cover);
 };
 
 #endif

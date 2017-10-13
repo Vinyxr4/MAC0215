@@ -102,6 +102,7 @@ void GLWidget::reload_shader (QString type) {
     u_worldToCamera = m_program->uniformLocation("worldToCamera");
     u_cameraToView = m_program->uniformLocation("cameraToView");
     u_gamma = m_program->uniformLocation ("gamma");
+    u_pass = m_program->uniformLocation ("pass");
     m_texAttr = m_program->attributeLocation("texCoord");
     m_program->release();
 }
@@ -141,22 +142,20 @@ void GLWidget::set_render_mode (int layers) {
 }
 
 void GLWidget::LoadText (int layers) {
-    QVector3D *font_vertex = (QVector3D*) malloc (Text->font_vertices.size () * sizeof (QVector3D));
+    QVector3D *font_vertex;
     QVector2D *font_tex;
 
-    if (bake_type != "curve blinn-loop") {
-        font_true_vertex = (QVector3D*) malloc (Text->font_vertices.size () * sizeof (QVector3D));
-        for (uint i = 0; i < Text->font_vertices.size (); ++i)
-            font_true_vertex[i] = Text->font_vertices[i];
-        font_vertex = font_true_vertex;
-    }
-    else {
+    font_true_vertex = (QVector3D*) malloc (Text->font_vertices.size () * sizeof (QVector3D));
+    for (uint i = 0; i < Text->font_vertices.size (); ++i)
+        font_true_vertex[i] = Text->font_vertices[i];
+    font_vertex = font_true_vertex;
+
+    if (bake_type == "curve blinn-loop") {
         font_triangulated = (QVector3D*) malloc (Text->font_vertices.size () * sizeof (QVector3D));
         std::vector<QVector3D> aux = Text->triangles_from_curve();
         for (uint i = 0; i < Text->font_vertices.size (); ++i)
             font_triangulated[i] = aux[i];
         font_vertex = font_triangulated;
-
     }
 
     if (!bake_type.contains("curve")) {
@@ -265,6 +264,7 @@ void GLWidget::initializeGL() {
     u_worldToCamera = m_program->uniformLocation("worldToCamera");
     u_cameraToView = m_program->uniformLocation("cameraToView");
     u_gamma = m_program->uniformLocation ("gamma");
+    u_pass = m_program->uniformLocation ("pass");
     m_texAttr = m_program->attributeLocation("texCoord");
 
     // Create Buffer (Do not release until VAO is created)
@@ -327,53 +327,74 @@ void GLWidget::paintGL() {
   set_render_mode (5);
 
   m_program->bind();
+  pass_value = FIRST;
 
   m_program->setUniformValue(u_worldToCamera, m_camera.toMatrix());
+  m_program->setUniformValue(u_modelToWorld, m_transform.toMatrix());
   m_program->setUniformValue(u_cameraToView, m_projection);
   m_program->setUniformValue (u_gamma, gamma_value);
+  m_program->setUniformValue (u_pass, pass_value);
   m_program->setUniformValue("texture", 0);
+
   {
     glEnable(GL_BLEND);
-
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glBlendFunc(GL_ONE, GL_ONE);
 
     glClearStencil(0);
-    if (bake_type == "curve blinn-loop") {
-        glEnable(GL_STENCIL_TEST);
-        glDisable(GL_DEPTH_TEST);
-        glStencilOp(GL_INVERT, GL_INVERT, GL_INVERT);
-        glStencilFunc(GL_ALWAYS, 1, 1);
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    }
+    if (bake_type == "curve blinn-loop")
+        prepare_stencil();
 
     m_object.bind();
-    m_program->setUniformValue(u_modelToWorld, m_transform.toMatrix());
     texture->bind();
     glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
 
     if (bake_type == "curve blinn-loop") {
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
-        glStencilFunc(GL_EQUAL, 1, 1);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        set_outline_vertices(SECOND);
+        texture->bind();
+        glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
+
+        write_from_stencil();
+        set_outline_vertices(FIRST);
+        glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
+
+        set_filling_vertices();
         glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
         glDisable(GL_STENCIL_TEST);
-
-        /*m_vertex.bind();
-        sg_vertexes_ = font_true_vertex;
-        m_vertex.allocate(sg_vertexes_, vertexCount_ * sizeof (QVector3D));
-        m_vertex.release();
-        glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
-        m_vertex.bind();
-        sg_vertexes_ = font_triangulated;
-        m_vertex.allocate(sg_vertexes_, vertexCount_ * sizeof (QVector3D));
-        m_vertex.release();*/
     }
-
     m_object.release();
   }
   m_program->release();
+}
+
+void GLWidget::prepare_stencil () {
+    glEnable(GL_STENCIL_TEST);
+    glDisable(GL_DEPTH_TEST);
+    glStencilOp(GL_INVERT, GL_INVERT, GL_INVERT);
+    glStencilFunc(GL_ALWAYS, 1, 1);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+}
+
+void GLWidget::write_from_stencil () {
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+    glStencilFunc(GL_EQUAL, 1, 1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+}
+
+void GLWidget::set_filling_vertices () {
+    m_vertex.bind();
+    sg_vertexes_ = font_triangulated;
+    m_vertex.allocate(sg_vertexes_, vertexCount_ * sizeof (QVector3D));
+    m_vertex.release();
+}
+
+void GLWidget::set_outline_vertices (int look_cover) {
+    m_vertex.bind();
+    sg_vertexes_ = font_true_vertex;
+    m_vertex.allocate(sg_vertexes_, vertexCount_ * sizeof (QVector3D));
+    pass_value = look_cover;
+    m_program->setUniformValue (u_pass, pass_value);
+    m_vertex.release();
 }
 
 void GLWidget::resizeGL(int w, int h) {

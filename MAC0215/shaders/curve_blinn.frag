@@ -2,6 +2,7 @@
 
 in vec2 tex;
 uniform float gamma;
+uniform int pass;
 
 out vec4 fcolor;
 
@@ -10,8 +11,8 @@ void main(void) {
 
     float test = tex.s*tex.s - tex.t;
 
-    //if (test > 0)
-    //    discard;
+    if (pass == 2 && test > 0)
+        discard;
 
     //float alpha = smoothstep (0.5 - gamma, 0.5 + gamma, t.r);
 
