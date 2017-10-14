@@ -312,7 +312,6 @@ void GLWidget::update() {
   }
   if (changed) {
       changed = false;
-      //m_transform.translate(0, 0, scale);
       zoom_factor += scale;
       resizeGL(w_size, h_size);
       last_albedo = albedo;
@@ -337,12 +336,15 @@ void GLWidget::paintGL() {
   m_program->setUniformValue("texture", 0);
 
   {
+    glEnable(GL_MULTISAMPLE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glClearStencil(0);
-    if (bake_type == "curve blinn-loop")
+    if (bake_type == "curve blinn-loop") {
         prepare_stencil();
+
+    }
 
     m_object.bind();
     texture->bind();
