@@ -341,19 +341,19 @@ void GLWidget::paintGL() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glClearStencil(0);
-    if (bake_type == "curve blinn-loop") {
+    if (bake_type.contains("curve"))
         prepare_stencil();
-
-    }
 
     m_object.bind();
     texture->bind();
     glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
 
-    if (bake_type == "curve blinn-loop") {
-        set_outline_vertices(SECOND);
-        texture->bind();
-        glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
+    if (bake_type.contains("curve")) {
+        if (bake_type == "curve blinn-loop") {
+            set_outline_vertices(SECOND);
+            texture->bind();
+            glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
+        }
 
         write_from_stencil();
         set_outline_vertices(FIRST);
@@ -361,8 +361,12 @@ void GLWidget::paintGL() {
         glEnable(GL_POLYGON_SMOOTH);
         glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
 
-        set_filling_vertices();
-        glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
+        if (bake_type == "curve blinn-loop") {
+            set_filling_vertices();
+            texture->bind();
+            glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
+        }
+
         glDisable(GL_POLYGON_SMOOTH);
         glDisable(GL_MULTISAMPLE);
         glEnable(GL_DEPTH_TEST);

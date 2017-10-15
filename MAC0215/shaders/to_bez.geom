@@ -1,11 +1,15 @@
 #version 330
 #extension GL_EXT_geometry_shader4: enable
 
-#define sampling 15
+#define sampling 4
 
 layout(triangles) in;
-layout(line_strip) out;
-layout (max_vertices =  sampling) out;
+layout(triangle_strip) out;
+layout (max_vertices =  45) out;
+
+uniform mat4 modelToWorld;
+uniform mat4 worldToCamera;
+uniform mat4 cameraToView;
 
 out vec4 pixel_color;
 
@@ -22,7 +26,7 @@ vec3 bezier_quadratic_eval (float t, vec3 control_p[3]) {
 
     vec3 ans = one_minus_2 * p[0] + one_minus_t_2 * p[1] + t_2 * p[2];
 
-    return ans/(sampling * sampling);
+    return ans/200;
 }
 
 void test () {
@@ -42,11 +46,20 @@ void main() {
     control_p[1] = gl_in[1].gl_Position.xyz;
     control_p[2] = gl_in[2].gl_Position.xyz;
 
+    mat4 chain = cameraToView * worldToCamera * modelToWorld;
+
     float delta = 1/float(sampling-1.0);
 
-    for (int i = 0; i < sampling; ++i) {
+    vec3 sample = bezier_quadratic_eval (0, control_p);
+    for (int i = 1; i < sampling; ++i) {
         float t = i * delta;
-        vec3 sample = bezier_quadratic_eval (t, control_p);
+        gl_Position = vec4(sample.xyz,1.0);
+        pixel_color = vec4 (0,0,0,1);
+        EmitVertex();
+        gl_Position = chain * vec4(-10, 0, 0,1.0);
+        pixel_color = vec4 (0,0,0,1);
+        EmitVertex();
+        sample = bezier_quadratic_eval (t, control_p);
         gl_Position = vec4(sample.xyz,1.0);
         pixel_color = vec4 (0,0,0,1);
         EmitVertex();
