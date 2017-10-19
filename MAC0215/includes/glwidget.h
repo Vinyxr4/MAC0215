@@ -101,7 +101,7 @@ private:
     GLuint* indices_;
     QVector3D* sg_vertexes_ = NULL;
     QVector3D *vertices;
-    QVector2D *Texture, *sg_texture_ = NULL;
+    QVector2D *Texture = NULL, *sg_texture_ = NULL;
     GLuint *indices;
 
     float dist_to_pages = -100.0;

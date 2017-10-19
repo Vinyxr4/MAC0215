@@ -1,11 +1,13 @@
 #include "glyph.h"
 
-glyph::glyph (int x, int y, int h, int w, char c, std::vector<QVector3D> c_points) {
+glyph::glyph (int x, int y, int h, int w, int d, char c, std::vector<QVector3D> c_points) {
     x_offset = x;
     y_offset = y;
     height = h;
     width = w;
     rep = c;
+
+        down = d;
     curve_points = std::vector<QVector3D> (c_points);
 }
 
@@ -27,4 +29,8 @@ int glyph::get_height () {
 
 int glyph::get_width () {
     return width;
+}
+
+int glyph::get_down () {
+    return down;
 }

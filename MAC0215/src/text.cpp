@@ -11,28 +11,6 @@ text::text (QString font, QString atlas) {
     define_font_type (QString (font));
     define_atlas (atlas);
     set_layer (1);
-    /*
-    image test;
-    bake_type = "distance transform city_block";
-
-    for (int i = 0; i < 5; ++i) {
-        image_line line;
-        for (int j = 0; j < 5; ++j)
-            line.push_back(1);
-        test.push_back (line);
-    }
-
-    test[4][4] = 0;
-
-    distance_transform transform_test (test, 5, 5);
-    do_transform (transform_test);
-
-    for (int i = 0; i < 5; ++i)
-        for (int j = 0; j < 5; ++j)
-        qDebug () << transform_test.get_transform_element(i,j);
-
-    */
-
 }
 
 /*** Public metthods ***/
@@ -63,19 +41,26 @@ void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
 
     int i = 0;
     for (QChar *c = text_to_render.begin(); c != text_to_render.end(); ++c, i += 4) {
-        font_vertices.push_back(quad_vertices[i]);
-        font_vertices.push_back(quad_vertices[i + 1]);
-        font_vertices.push_back(quad_vertices[i + 2]);
-        font_vertices.push_back(quad_vertices[i + 2]);
-        font_vertices.push_back(quad_vertices[i + 1]);
-        font_vertices.push_back(quad_vertices[i + 3]);
-
         glyph g = glyph_set[layer][c->unicode()];
+
+        float height = (quad_vertices[i+2].y()-quad_vertices[i].y())/(1.0 * g.get_height ());
+        float width = (quad_vertices[i+1].x()-quad_vertices[i].x())/(1.0 * (g.get_width ()+1));
+        int down_glyph = g.get_down();
+
+        std::vector<int> indices = {0,1,2,2,1,3};
+        for (int k = 0; k < (int) indices.size();++k) {
+            int cur_index = i + indices[k];
+            float aux1 = quad_vertices[cur_index].x();
+            float aux2 = (quad_vertices[cur_index].y())-down_glyph * height;
+            float aux3 = quad_vertices[cur_index].z();
+            QVector3D to_push = QVector3D(aux1,aux2,aux3);
+            font_vertices.push_back(to_push);
+        }
 
         float x_offset = (1.0 * g.get_x_offset()) / x_size;
         float y_offset = (1.0 * g.get_y_offset()) / y_size;
-        float height = (1.0 * g.get_height ()) / y_size;
-        float width = (1.0 * g.get_width ()) / x_size;
+        height = (1.0 * g.get_height ()) / y_size;
+        width = (1.0 * g.get_width ()) / x_size;
 
         font_texture.push_back(QVector2D(x_offset, 1 - (y_offset + height)));
         font_texture.push_back(QVector2D(x_offset + width, 1 - (y_offset + height)));
@@ -96,10 +81,9 @@ void text::define_text_curve (QString t, std::vector<QVector3D> quad_vertices) {
     int i = 0;
     for (QChar *c = text_to_render.begin(); c != text_to_render.end(); ++c, i += 4) {
         glyph g = glyph_set[layer][c->unicode()];
-        //int tam = g.curve_points.size();
         float height = (quad_vertices[i+2].y()-quad_vertices[i].y())/(1.0 * g.get_height ());
         float width = (quad_vertices[i+1].x()-quad_vertices[i].x())/(1.0 * g.get_width ());
-        for (int j = 0; j < g.curve_points.size(); j++) {
+        for (int j = 0; j < (int) g.curve_points.size(); j++) {
             QVector3D aux = QVector3D (g.curve_points[j].x()*width,g.curve_points[j].y()*height,g.curve_points[j].z());
             font_vertices.push_back(quad_vertices[i]+aux);
 
@@ -198,7 +182,7 @@ void text::bake (int max_resolution, int max_size) {
 
     int GLYPH_HEIGHT = max_size;
     int DPI = atlas_resolution * max_resolution;
-    int padding = 10;
+    int padding = 12;
 
     std::locale loc("en_US.UTF-8");
     FT_Set_Char_Size (face, 0, GLYPH_HEIGHT, DPI, DPI);
@@ -223,6 +207,7 @@ void text::bake (int max_resolution, int max_size) {
     for (int l = 0; l < 1; ++l) {
         std::vector<glyph> set;
         x = last_x, y = last_y;
+        int down = 0;
         for (int i = 0; i < num_glyphs; ++i) {
             FT_Load_Char (face, i, FT_LOAD_RENDER | FT_LOAD_TARGET_LIGHT);
             FT_Bitmap *bmp = &face->glyph->bitmap;
@@ -241,14 +226,23 @@ void text::bake (int max_resolution, int max_size) {
                 distance_transform transform (img, bmp->rows, bmp->width);
                 do_transform (transform);
 
+
+
+
+                down = (face->glyph->metrics.height - face->glyph->metrics.horiBearingY) >> 6;
+                if (i > 30 && i < 100) {
+                    qDebug () << (face->glyph->metrics.height >>6);
+                    qDebug () << (face->glyph->metrics.horiBearingY >>6);
+                    qDebug() << down;
+                }
                 prepare_texture (transform, texture, x, y);
-                set.push_back (glyph (x, y, bmp->rows, bmp->width, i, test));
+                set.push_back (glyph (x, y, bmp->rows, bmp->width, down, i, test));
 
                 x +=  padding + bmp->width;
 
             }
             else
-                set.push_back (glyph (0, 0, 0, 0, i, test));
+                set.push_back (glyph (0, 0, 0, 0, down, i, test));
         }
         glyph_set.push_back(set);
         if ((l+1) % 2)
@@ -343,8 +337,6 @@ std::vector<QVector3D> text::create_control_points (font_points outline) {
         }
         curr_contour = outline.contours[i]+1;
     }
-
-    //qDebug() << control_points;
     return control_points;
 }
 
@@ -352,7 +344,7 @@ std::vector<QVector3D> text::triangles_from_curve () {
     QVector3D fix_point = QVector3D (-10,0,0);
 
     std::vector<QVector3D> triangles;
-    for (int i = 0; i < font_vertices.size(); i += 3) {
+    for (int i = 0; i < (int) font_vertices.size(); i += 3) {
         triangles.push_back(font_vertices[i]);
         triangles.push_back(fix_point);
         triangles.push_back(font_vertices[i+2]);

@@ -50,11 +50,23 @@ void GLWidget::set_atlas_resolution_value (float new_value) {
 }
 
 void GLWidget::initTex (QString url) {
+
+    if (texture != NULL)
+        texture->~QOpenGLTexture();
+
+
     texture = new QOpenGLTexture (QImage (url).mirrored());
 
-    texture->setMinificationFilter(QOpenGLTexture::Linear);
-    texture->setMagnificationFilter(QOpenGLTexture::Linear);
+    /*if (bake_type == "trivial" && trivial_type == "texture mip") {
+        texture->generateMipMaps();
+        texture->setMipLevels(10);
+    }*/
+    texture->setMinificationFilter(QOpenGLTexture::LinearMipMapNearest);
+    texture->setMagnificationFilter(QOpenGLTexture::LinearMipMapNearest);
     texture->setWrapMode(QOpenGLTexture::MirroredRepeat);
+
+
+
 }
 
 void GLWidget::loadTexture (QString file) {
@@ -239,8 +251,6 @@ void GLWidget::initializeGL() {
   glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 
   initTex (atlas);
-  //texture->setMipLevels(layers);
-  texture->generateMipMaps();
 
   // Application-specific initialization
   {
@@ -414,7 +424,6 @@ void GLWidget::resizeGL(int w, int h) {
   w_size = float(w);
   h_size = float(h);
   m_projection.setToIdentity();
-  //m_projection.ortho(-zoom*5 *float(w)/float(h), zoom* 5 *float(w)/float(h), -zoom*5, zoom*5,  1, 1000);
   m_projection.perspective(180.0f * zoom, w / float(h), 1.0f, 1000.0f);
 }
 
@@ -427,7 +436,6 @@ void GLWidget::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 void GLWidget::printContextInformation() {
-  // qPrintable() will print our QString w/o quotes around it.
   qDebug() << "Context valid: " << context()->isValid();
   qDebug() << "Really used OpenGl: " << context()->format().majorVersion() << "." << context()->format().minorVersion();
   qDebug() << "OpenGl information: VENDOR:       " << (const char*)glGetString(GL_VENDOR);

@@ -14,7 +14,7 @@ typedef FT_Outline font_points;
 class glyph {
 public:
     // Glyph constructor: recieves lower left position, height, width and char representation
-    glyph (int x, int y, int h, int w, char c, std::vector<QVector3D> c_points);
+    glyph (int x, int y, int h, int w, int d, char c, std::vector<QVector3D> c_points);
 
     // Returns char represented by the glyph
     char get_char ();
@@ -31,10 +31,12 @@ public:
     // Returns glyph width
     int get_width ();
 
+    int get_down ();
+
     std::vector<QVector3D> curve_points;
 
 private:
-    int height, width, x_offset, y_offset;
+    int height, width, x_offset, y_offset, down = 0;
     char rep;
 };
 

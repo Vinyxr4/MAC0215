@@ -171,12 +171,10 @@ void Window::valueGa(int nv) {
 }
 
 void Window::valueAD (int nv) {
-    if (!nv) nv++;
-    glWidget->set_atlas_dimension_value (atlas_factor * nv);
+    glWidget->set_atlas_dimension_value (atlas_factor * (nv+3));
 }
 void Window::valueAR (int nv) {
-    if (!nv) nv++;
-    glWidget->set_atlas_resolution_value (resolution_factor * nv);
+    glWidget->set_atlas_resolution_value (resolution_factor * (nv+3));
 }
 
 // Bake type button controller
