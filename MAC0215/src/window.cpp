@@ -127,7 +127,8 @@ QGroupBox* Window::createBakeTypeBoxes() {
   distance_chess_board = new QPushButton ("Chessboard", this);
   distance_euclidean = new QPushButton ("Euclidean", this);
   distance_fmm = new QPushButton ("Fast Marching", this);
-  curve = new QPushButton ("Curve Outline", this);
+  curve_pure = new QPushButton ("Only Outline", this);
+  curve = new QPushButton ("Filled Outline", this);
   curve_blinn = new QPushButton ("Blinn-Loop", this);
 
   trivialLayout->addWidget(trivial_texture);
@@ -148,8 +149,10 @@ QGroupBox* Window::createBakeTypeBoxes() {
   distanceGroup->setLayout(distanceLayout);
   bakeLayout->addWidget(distanceGroup);
 
+  curveLayout->addWidget(curve_pure);
   curveLayout->addWidget(curve);
   curveLayout->addWidget(curve_blinn);
+  connect(curve_pure, SIGNAL(clicked()), this, SLOT(curveOutlinePureSlot()));
   connect(curve, SIGNAL(clicked()), this, SLOT(curveOutlineSlot()));
   connect(curve_blinn, SIGNAL(clicked()), this, SLOT(curveBlinnSlot()));
   curveGroup->setLayout(curveLayout);
@@ -186,6 +189,7 @@ void Window::trivialTexSlot () {
 void Window::trivialMipSlot () {
    glWidget->set_bake_type ("trivial");
    glWidget->set_trivial_type ("texture mip");
+   glWidget->numi = 0;
 }
 
 void Window::distanceCityBlockSlot () {
@@ -206,6 +210,11 @@ void Window::distanceEuclideanSlot () {
 void Window::distanceFMMSlot () {
    glWidget->set_bake_type ("texture distance transform");
    glWidget->set_transform_type ("fast marching");
+}
+
+
+void Window::curveOutlinePureSlot () {
+   glWidget->set_bake_type ("curve outline pure");
 }
 
 void Window::curveOutlineSlot () {

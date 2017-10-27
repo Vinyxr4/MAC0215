@@ -225,21 +225,11 @@ void text::bake (int max_resolution, int max_size) {
                 img = construct_image (bmp);
                 distance_transform transform (img, bmp->rows, bmp->width);
                 do_transform (transform);
-
-
-
-
                 down = (face->glyph->metrics.height - face->glyph->metrics.horiBearingY) >> 6;
-                if (i > 30 && i < 100) {
-                    qDebug () << (face->glyph->metrics.height >>6);
-                    qDebug () << (face->glyph->metrics.horiBearingY >>6);
-                    qDebug() << down;
-                }
                 prepare_texture (transform, texture, x, y);
                 set.push_back (glyph (x, y, bmp->rows, bmp->width, down, i, test));
 
                 x +=  padding + bmp->width;
-
             }
             else
                 set.push_back (glyph (0, 0, 0, 0, down, i, test));

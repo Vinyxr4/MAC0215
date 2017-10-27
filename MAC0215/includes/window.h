@@ -41,6 +41,7 @@ private slots:
     void distanceChessBoardSlot ();
     void distanceFMMSlot ();
     void curveOutlineSlot ();
+    void curveOutlinePureSlot ();
     void curveBlinnSlot ();
     void curveSlot ();
 
@@ -60,7 +61,7 @@ private:
     QPushButton *distance_chess_board, *distance_city_block, *distance_euclidean;
     QPushButton *distance_fmm;
     QPushButton *trivial_texture, *trivial_mip;
-    QPushButton *curve, *curve_blinn;
+    QPushButton *curve, *curve_blinn, *curve_pure;
 
     // Sliders
     QSlider *albedoSlider;

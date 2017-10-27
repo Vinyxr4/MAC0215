@@ -1,17 +1,16 @@
 #include "glwidget.h"
 #include <QDebug>
 #include <QString>
+#include <QTime>
 
 #include <cmath>
 
 #include <iostream>
 #include <QOpenGLShaderProgram>
 #include <QCoreApplication>
+#include <QOpenGLTimerQuery>
 
 #include "input.h"
-
-QOpenGLTexture *texture = NULL;
-QString atlas = "teste.png";
 
 GLWidget::GLWidget(int step, QWidget *parent)
     : QOpenGLWidget(parent),
@@ -51,26 +50,20 @@ void GLWidget::set_atlas_resolution_value (float new_value) {
 
 void GLWidget::initTex (QString url) {
 
-    if (texture != NULL)
-        texture->~QOpenGLTexture();
 
-
-    texture = new QOpenGLTexture (QImage (url).mirrored());
-
-    /*if (bake_type == "trivial" && trivial_type == "texture mip") {
-        texture->generateMipMaps();
-        texture->setMipLevels(10);
-    }*/
-    texture->setMinificationFilter(QOpenGLTexture::LinearMipMapNearest);
-    texture->setMagnificationFilter(QOpenGLTexture::LinearMipMapNearest);
-    texture->setWrapMode(QOpenGLTexture::MirroredRepeat);
-
-
-
+    if (bake_type == "trivial" && trivial_type == "texture mip") {
+        texture->create();
+        texture->setMipLevels(30);
+        texture = new QOpenGLTexture (QImage (url).mirrored());
+        texture->setMinificationFilter(QOpenGLTexture::NearestMipMapLinear);
+        texture->setMagnificationFilter(QOpenGLTexture::Nearest);
+    }
+    else
+        texture = new QOpenGLTexture (QImage (url).mirrored(), QOpenGLTexture::DontGenerateMipMaps);
 }
 
 void GLWidget::loadTexture (QString file) {
-    delete texture;
+    texture->destroy();
     QString url = (file);
     initTex (url);
 }
@@ -84,10 +77,12 @@ void GLWidget::reload_shader (QString type) {
         delete m_program;
     m_program = new QOpenGLShaderProgram();
 
-    if (type == "curve outline") {
+    if (type.contains("outline")) {
         vertex_shader = ":/shaders/curve.vert";
         fragment_shader = ":/shaders/curve.frag";
-        geometry_shader = ":/shaders/to_bez.geom";
+        if (!type.contains("pure"))
+            geometry_shader = ":/shaders/to_bez.geom";
+        else geometry_shader = ":/shaders/to_bez_outline.geom";
 
         g_shader = new QOpenGLShader(QOpenGLShader::Geometry);
         if (!g_shader->compileSourceFile(geometry_shader))
@@ -123,13 +118,12 @@ void GLWidget::set_render_mode (int layers) {
     m_program->bind();
     disconnectUpdate ();
     if (change_render) {
+        QTime timer;
+        timer.start();
         Text->set_atlas_dimension_value (atlas_dimension_value);
         Text->set_atlas_resolution_value (atlas_resolution_value);
         if (bake_type == "trivial") {
-            if (trivial_type == "texture")
-                Text->bake_atlas ();
-            else if (trivial_type == "texture mip")
-                Text->bake_atlas ();
+            Text->bake_atlas ();
         }
         else if (bake_type == "texture distance transform") {
             Text->bake_dist_transf (transform_type);
@@ -138,16 +132,16 @@ void GLWidget::set_render_mode (int layers) {
         if (!bake_type.contains("curve")) {
             Text->gen_test_pdf ("texture");
             loadTexture (atlas);
-            if (trivial_type == "texture mip" && bake_type == "trivial")
-                texture->generateMipMaps();
         }
-        else {
+        else
             Text->gen_test_pdf ("curve outline");
-        }
 
         reload_shader(bake_type);
         LoadText (layers);
         change_render = false;
+
+        int mili = timer.elapsed();
+        //qDebug () << mili;
     }
     connectUpdate ();
     m_program->release();
@@ -333,6 +327,13 @@ void GLWidget::update() {
 void GLWidget::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  /*m_program->bind();
+  if (bake_type == "trivial" && trivial_type.contains("mip") and numi < 20) {
+    change_render = true;
+    numi++;
+  }
+  m_program->release();*/
+
   set_render_mode (5);
 
   m_program->bind();
@@ -345,20 +346,28 @@ void GLWidget::paintGL() {
   m_program->setUniformValue (u_pass, pass_value);
   m_program->setUniformValue("texture", 0);
 
+  QOpenGLTimerQuery timer;
+  timer.create();
+
+  timer.begin();
   {
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glClearStencil(0);
-    if (bake_type.contains("curve"))
+    if (bake_type.contains("curve") && !bake_type.contains("pure"))
         prepare_stencil();
 
     m_object.bind();
     texture->bind();
+    if (bake_type.contains("pure"))
+        glEnable(GL_POLYGON_SMOOTH);
     glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
+    if (bake_type.contains("pure"))
+        glDisable(GL_POLYGON_SMOOTH);
 
-    if (bake_type.contains("curve")) {
+    if (bake_type.contains("curve") && !bake_type.contains("pure")) {
         if (bake_type == "curve blinn-loop") {
             set_outline_vertices(SECOND);
             texture->bind();
@@ -367,7 +376,6 @@ void GLWidget::paintGL() {
 
         write_from_stencil();
         set_outline_vertices(FIRST);
-        glEnable(GL_MULTISAMPLE);
         glEnable(GL_POLYGON_SMOOTH);
         glDrawArrays(GL_TRIANGLES, 0, vertexCount_);
 
@@ -385,6 +393,8 @@ void GLWidget::paintGL() {
     m_object.release();
   }
   m_program->release();
+  timer.end();
+  qDebug() << timer.waitForResult()/1000.0;
 }
 
 void GLWidget::prepare_stencil () {

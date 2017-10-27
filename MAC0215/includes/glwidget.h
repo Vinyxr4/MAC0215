@@ -53,6 +53,8 @@ public:
     QOpenGLShaderProgram *m_program = NULL;
     QOpenGLShader *shader, *g_shader;
 
+    int numi = 20;
+
 public slots:
     void cleanup();
 
@@ -71,6 +73,9 @@ private:
     void printContextInformation();
     void initTex (QString url);
     void loadTexture (QString file);
+
+    QOpenGLTexture *texture;
+    QString atlas = "teste.png";
 
     QString transform_type = "";
     QString trivial_type = "";
