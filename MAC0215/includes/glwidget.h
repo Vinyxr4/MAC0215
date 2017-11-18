@@ -12,6 +12,7 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLTexture>
+#include <QOpenGLTimerQuery>
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 
@@ -53,7 +54,7 @@ public:
     QOpenGLShaderProgram *m_program = NULL;
     QOpenGLShader *shader, *g_shader;
 
-    int numi = 20;
+    int numi = 25;
 
 public slots:
     void cleanup();
@@ -126,6 +127,8 @@ private:
     void write_from_stencil ();
     void set_filling_vertices ();
     void set_outline_vertices (int look_cover);
+
+    QOpenGLTimerQuery timer;
 };
 
 #endif

@@ -69,6 +69,8 @@ private:
     QString code_path = "../MAC0215/src/";
     QString pdf_test_path = "../MAC0215/pdf/";
     float atlas_dimension = 0.5, atlas_resolution = 0.5;
+    bool read_txt = false;
+    std::vector<QVector3D> txt_vertices;
 
     // Bakes an atlas
     void bake (int max_resolution, int max_size);

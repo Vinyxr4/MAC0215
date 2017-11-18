@@ -62,6 +62,7 @@ void text::define_text (QString t, std::vector<QVector3D> quad_vertices) {
         height = (1.0 * g.get_height ()) / y_size;
         width = (1.0 * g.get_width ()) / x_size;
 
+
         font_texture.push_back(QVector2D(x_offset, 1 - (y_offset + height)));
         font_texture.push_back(QVector2D(x_offset + width, 1 - (y_offset + height)));
         font_texture.push_back(QVector2D(x_offset, 1 - y_offset));
@@ -93,42 +94,52 @@ void text::define_text_curve (QString t, std::vector<QVector3D> quad_vertices) {
 
 void text::define_text_from_pdf (QString pdf_path, QString render) {
     pdf_extractor *extractor = new pdf_extractor (pdf_path.toStdString(), code_path.toStdString());
-    QString txt;
-    double *bbox;
+    int offset = 0;
+    int to_sum = 500;
     int num_pages;
-
-    extractor->init ();
-    num_pages = extractor->extract ();
-    txt = QString (extractor->get_text(0).c_str());
-    bbox = extractor->get_bbox(0);
-    extractor->end ();
+    double *bbox;
+    QString tmp_txt, txt;
 
     QString highlowers = "bdfhijklt";
     QString pontuation = ",.;";
     QString lower_letters = "qpg";
 
-    std::vector<QVector3D> txt_vertices;
-    int i, j;
-    for (i = 0, j = 0; i < txt.size(); ++i, j += 4) {
-        float scale = 0.5;
-        float low_y_scale = 1;
-        float low_x_scale = 1;
-        if (txt[i].isLower() && !highlowers.contains(txt[i], Qt::CaseSensitive))
-            low_y_scale = 0.7;
-        if (pontuation.contains(txt[i]))
-            low_y_scale = 0.3;
-        if (lower_letters.contains(txt[i]))
-            low_y_scale = 1;
-        txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 1], 0)*scale);
-        txt_vertices.push_back (QVector3D (bbox[j] +  (bbox[j + 2] - bbox[j]) * low_x_scale, bbox[j + 1], 0)*scale);
-        txt_vertices.push_back (QVector3D (bbox[j], bbox[j + 1] + (bbox[j + 3] - bbox[j + 1]) * low_y_scale, 0)*scale);
-        txt_vertices.push_back (QVector3D (bbox[j] +  (bbox[j + 2] - bbox[j]) * low_x_scale, bbox[j + 1] + (bbox[j + 3] - bbox[j + 1]) * low_y_scale, 0)*scale);
+    extractor->init ();
+    if (!read_txt) {
+        num_pages = extractor->extract ();
+
+        for (int n = 0; n < num_pages; ++n) {
+            int i, j;
+            tmp_txt =  QString (extractor->get_text(n).c_str());
+            txt = txt + tmp_txt;
+            bbox = extractor->get_bbox(n);
+            for (i = 0, j = 0; i < tmp_txt.size(); ++i, j += 4) {
+                float scale = 0.5;
+                float low_y_scale = 1;
+                float low_x_scale = 1;
+                if (tmp_txt[i].isLower() && !highlowers.contains(tmp_txt[i], Qt::CaseSensitive))
+                    low_y_scale = 0.7;
+                if (pontuation.contains(tmp_txt[i]))
+                    low_y_scale = 0.3;
+                if (lower_letters.contains(tmp_txt[i]))
+                    low_y_scale = 1;
+                txt_vertices.push_back (QVector3D (bbox[j]+offset, bbox[j + 1], 0)*scale);
+                txt_vertices.push_back (QVector3D (offset + bbox[j] +  (bbox[j + 2] - bbox[j]) * low_x_scale, bbox[j + 1], 0)*scale);
+                txt_vertices.push_back (QVector3D (offset + bbox[j], bbox[j + 1] + (bbox[j + 3] - bbox[j + 1]) * low_y_scale, 0)*scale);
+                txt_vertices.push_back (QVector3D (offset+ bbox[j] +  (bbox[j + 2] - bbox[j]) * low_x_scale, bbox[j + 1] + (bbox[j + 3] - bbox[j + 1]) * low_y_scale, 0)*scale);
+            }
+            offset += to_sum;
+        }
+        text_to_render = txt;
     }
+    extractor->end ();
+    read_txt = true;
 
     if (render == "curve outline")
-        define_text_curve (txt, txt_vertices);
+        define_text_curve (text_to_render, txt_vertices);
     else
-        define_text (txt, txt_vertices);
+        define_text (text_to_render, txt_vertices);
+
 
 }
 

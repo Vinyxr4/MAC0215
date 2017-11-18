@@ -8,7 +8,6 @@
 #include <iostream>
 #include <QOpenGLShaderProgram>
 #include <QCoreApplication>
-#include <QOpenGLTimerQuery>
 
 #include "input.h"
 
@@ -118,6 +117,7 @@ void GLWidget::set_render_mode (int layers) {
     m_program->bind();
     disconnectUpdate ();
     if (change_render) {
+        numi = 0;
         QTime timer;
         timer.start();
         Text->set_atlas_dimension_value (atlas_dimension_value);
@@ -242,7 +242,7 @@ void GLWidget::initializeGL() {
   glEnable(GL_DEPTH_TEST);
 
   glDepthRange(0,1);
-  glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
   initTex (atlas);
 
@@ -327,13 +327,6 @@ void GLWidget::update() {
 void GLWidget::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  /*m_program->bind();
-  if (bake_type == "trivial" && trivial_type.contains("mip") and numi < 20) {
-    change_render = true;
-    numi++;
-  }
-  m_program->release();*/
-
   set_render_mode (5);
 
   m_program->bind();
@@ -346,10 +339,11 @@ void GLWidget::paintGL() {
   m_program->setUniformValue (u_pass, pass_value);
   m_program->setUniformValue("texture", 0);
 
-  QOpenGLTimerQuery timer;
-  timer.create();
+  if (numi < 100) {
+      timer.create();
+      timer.begin();
+  }
 
-  timer.begin();
   {
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_BLEND);
@@ -392,9 +386,17 @@ void GLWidget::paintGL() {
     }
     m_object.release();
   }
+
+  if (numi < 25) {
+      timer.end();
+      while (!timer.isResultAvailable()) {
+          continue;
+      }
+    qDebug() << timer.waitForResult()/1000.0;
+    numi++;
+  }
+
   m_program->release();
-  timer.end();
-  qDebug() << timer.waitForResult()/1000.0;
 }
 
 void GLWidget::prepare_stencil () {
